@@ -1,4 +1,4 @@
-module flat-scout
+module flat-stalker
 
 go 1.26.2
 
