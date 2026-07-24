@@ -1,2 +1,4 @@
 .env
 example.http
+.wrangler
+.dev.vars

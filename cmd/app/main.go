@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"os"
 	"os/signal"
 
@@ -25,6 +26,9 @@ func main() {
 		b:   b,
 		ctx: ctx,
 	}
+
+	b.RegisterHandler(bot.HandlerTypeMessageText, "help", bot.MatchTypeCommand, TgBot.helpHandler)
+
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 	router.POST("/message", TgBot.Message)
@@ -34,13 +38,6 @@ func main() {
 	}()
 
 	router.Run(":8080")
-}
-
-func handler(ctx context.Context, b *bot.Bot, update *models.Update) {
-	b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID: update.Message.Chat.ID,
-		Text:   update.Message.Text,
-	})
 }
 
 type Bot struct {
@@ -60,6 +57,17 @@ func (TgBot *Bot) Message(c *gin.Context) {
 		return
 	}
 	TgBot.SendMessage(message.Msg, message.ChatID)
+}
+
+func (TgBot *Bot) helpHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
+	_, err := TgBot.b.SendMessage(TgBot.ctx, &bot.SendMessageParams{
+		ChatID:    update.Message.Chat.ID,
+		Text:      "По всем вопросам пишите сюда <b>@bazan_ivan</b>",
+		ParseMode: models.ParseModeHTML,
+	})
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 func (TgBot *Bot) SendMessage(message, chat_id string) {
