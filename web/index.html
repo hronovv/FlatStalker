@@ -7,117 +7,252 @@
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
     <title>FlatStalker</title>
+    <script>
+      (function () {
+        var base = document.createElement("base");
+        base.href = /github\.io$/i.test(location.hostname)
+          ? "/FlatStalker/"
+          : "./";
+        document.head.appendChild(base);
+      })();
+    </script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="styles.css?v=7" />
   </head>
   <body>
-    <div class="rail" aria-hidden="true"></div>
+    <div class="fx" aria-hidden="true">
+      <span class="stick s1"></span>
+      <span class="stick s2"></span>
+      <span class="stick s3"></span>
+      <span class="stick s4"></span>
+      <span class="stick s5"></span>
+      <span class="stick s6"></span>
+      <span class="orb o1"></span>
+      <span class="orb o2"></span>
+    </div>
 
     <main class="page">
-      <section class="hero">
-        <div class="meta-row">
-          <span class="tag">BY · RENT · LIVE</span>
-          <span class="meta" id="status">SYSTEM ONLINE</span>
+      <header class="top reveal">
+        <svg class="logo-mark" viewBox="0 0 48 48" aria-hidden="true">
+          <rect width="48" height="48" rx="12" fill="#FFE600" />
+          <path
+            d="M15 31.5V22.2L24 15l9 7.2v9.3h-5.2v-6.2h-7.6v6.2H15z"
+            fill="#111"
+          />
+          <path
+            d="M29.5 13.2c2.8 1.1 4.8 3.4 5.5 6.2"
+            stroke="#111"
+            stroke-width="2.4"
+            stroke-linecap="round"
+            fill="none"
+          />
+          <path
+            d="M32.2 11c3.6 1.5 6.2 4.6 7 8.3"
+            stroke="#111"
+            stroke-width="2.4"
+            stroke-linecap="round"
+            fill="none"
+            opacity="0.55"
+          />
+        </svg>
+        <div class="top-text">
+          <p class="brand">
+            <span class="brand-flat">FLAT</span><span class="brand-stalker">STALKER</span>
+          </p>
+          <p class="hello" id="hello">Привет — это твой кабинет</p>
         </div>
+      </header>
 
-        <p class="brand">
-          Flat<span class="brand-mark">Stalker</span>
+      <section class="panel filters reveal">
+        <div class="panel-head">
+          <h1>Фильтры</h1>
+          <span class="chip">PREVIEW</span>
+        </div>
+        <p class="hint">
+          Настроишь один раз — дальше бот будет присылать подходящие объявления
+          по РБ.
         </p>
 
-        <h1 id="greeting">Квартиры ловятся в секунды</h1>
-        <p id="lead" class="lead">
-          Новые объявления аренды → пуш в Telegram со ссылкой.
+        <form class="form" id="filters-form" autocomplete="off">
+          <label class="field">
+            <span class="label">Город</span>
+            <input type="text" name="city" placeholder="Например, Минск" />
+          </label>
+
+          <div class="row">
+            <label class="field">
+              <span class="label">Цена от</span>
+              <input type="number" name="price_min" placeholder="USD" inputmode="numeric" />
+            </label>
+            <label class="field">
+              <span class="label">Цена до</span>
+              <input type="number" name="price_max" placeholder="USD" inputmode="numeric" />
+            </label>
+          </div>
+
+          <div class="field">
+            <span class="label">Комнаты</span>
+            <div class="seg" role="group" aria-label="Количество комнат">
+              <button type="button" class="seg-btn is-active" data-rooms="">Любое</button>
+              <button type="button" class="seg-btn" data-rooms="1">1</button>
+              <button type="button" class="seg-btn" data-rooms="2">2</button>
+              <button type="button" class="seg-btn" data-rooms="3">3</button>
+              <button type="button" class="seg-btn" data-rooms="4+">4+</button>
+            </div>
+            <input type="hidden" name="rooms" id="rooms-input" value="" />
+          </div>
+
+          <label class="field">
+            <span class="label">Ссылка на поиск</span>
+            <input
+              type="url"
+              name="search_url"
+              placeholder="Ссылка с площадки объявлений"
+            />
+          </label>
+
+          <button class="btn" type="submit">
+            <span>Сохранить фильтры</span>
+            <span class="btn-shine" aria-hidden="true"></span>
+          </button>
+          <p class="form-note" id="form-note">
+            Можно потыкать поля — сохранение подключим совсем скоро.
+          </p>
+        </form>
+      </section>
+
+      <section class="panel about-lead reveal">
+        <h2>Суть</h2>
+        <p>
+          FlatStalker помогает опередить других: следит за новыми объявлениями
+          об аренде в РБ и присылает тебе уведомление со ссылкой, пока квартиру
+          не забрали.
         </p>
+      </section>
 
-        <div class="cta-row">
-          <a class="btn" id="cta-main" href="https://t.me/flatstalker_bot" rel="noopener">
-            Открыть бота
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"/>
-            </svg>
-          </a>
+      <details class="acc reveal">
+        <summary>
+          <span>Как это работает</span>
+          <svg class="chev" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </summary>
+        <div class="acc-body">
+          <ol class="steps">
+            <li><strong>1</strong><span>Открываешь бота и кабинет</span></li>
+            <li><strong>2</strong><span>Задаёшь город, бюджет и комнаты</span></li>
+            <li><strong>3</strong><span>Получаешь уведомление со ссылкой на новое объявление</span></li>
+          </ol>
         </div>
+      </details>
 
-        <div class="ticker" aria-hidden="true">
-          <div class="ticker-track">
-            <span>SCAN</span><span>MATCH</span><span>PUSH</span><span>OPEN</span>
-            <span>SCAN</span><span>MATCH</span><span>PUSH</span><span>OPEN</span>
+      <details class="acc reveal">
+        <summary>
+          <span>Возможности</span>
+          <svg class="chev" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </summary>
+        <div class="acc-body">
+          <ul class="feats">
+            <li>
+              <span class="feat-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.2-3.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </span>
+              <div>
+                <strong>Следим за объявлениями</strong>
+                <span>Новые варианты не нужно искать вручную</span>
+              </div>
+            </li>
+            <li>
+              <span class="feat-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3L5 13h6l-1 8 9-12h-6V3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+              </span>
+              <div>
+                <strong>Быстрые уведомления</strong>
+                <span>Ссылка приходит сразу, без долгих сводок</span>
+              </div>
+            </li>
+            <li>
+              <span class="feat-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M7 7V5h10v2M8 11v6M12 11v6M16 11v6M6 21h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </span>
+              <div>
+                <strong>Твои условия</strong>
+                <span>Город, цена, комнаты и ссылка на поиск</span>
+              </div>
+            </li>
+            <li>
+              <span class="feat-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-4.4-7-11a7 7 0 0114 0c0 6.6-7 11-7 11z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="10" r="2.2" fill="currentColor"/></svg>
+              </span>
+              <div>
+                <strong>По всей РБ</strong>
+                <span>Под поиск аренды в Беларуси</span>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="acc reveal" open>
+        <summary>
+          <span>Тарифы</span>
+          <svg class="chev" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </summary>
+        <div class="acc-body">
+          <div class="plans">
+            <article class="plan">
+              <p class="plan-name">FREE <span>soon</span></p>
+              <p class="plan-desc">Старт: базовые уведомления по твоим фильтрам</p>
+            </article>
+            <article class="plan plan-plus">
+              <p class="plan-name">PLUS <span>soon</span></p>
+              <p class="plan-desc">Больше фильтров и стабильнее обновления</p>
+            </article>
+            <article class="plan plan-pro">
+              <p class="plan-name">PRO <span>soon</span></p>
+              <p class="plan-desc">Максимальная скорость и приоритет уведомлений</p>
+            </article>
+          </div>
+          <p class="acc-note">Цены и оплату добавим позже.</p>
+        </div>
+      </details>
+
+      <details class="acc reveal">
+        <summary>
+          <span>FAQ</span>
+          <svg class="chev" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </summary>
+        <div class="acc-body">
+          <div class="faq">
+            <p class="faq-q">Есть вопрос по FlatStalker?</p>
+            <p class="faq-a">
+              Напиши
+              <a href="https://t.me/bazan_ivan" rel="noopener">@bazan_ivan</a>
+            </p>
           </div>
         </div>
-      </section>
+      </details>
 
-      <section id="about" class="block">
-        <div class="block-head">
-          <span class="idx">01</span>
-          <h2>Суть</h2>
-        </div>
-        <p class="tight">
-          Следим за площадками. Режем дубли. Шлём только свежие лоты.
-        </p>
-      </section>
-
-      <section class="block">
-        <div class="block-head">
-          <span class="idx">02</span>
-          <h2>Запуск</h2>
-        </div>
-        <ol class="flow">
-          <li>
-            <span class="n">01</span>
-            <span>Start в боте</span>
-          </li>
-          <li>
-            <span class="n">02</span>
-            <span>Фильтры</span>
-          </li>
-          <li>
-            <span class="n">03</span>
-            <span>Пуш со ссылкой</span>
-          </li>
-        </ol>
-      </section>
-
-      <section class="block">
-        <div class="block-head">
-          <span class="idx">03</span>
-          <h2>Стек сигналов</h2>
-        </div>
-        <ul class="grid">
-          <li>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.2-3.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"/></svg>
-            <strong>Мониторинг</strong>
-            <span>24/7 обход выдачи</span>
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3L5 13h6l-1 8 9-12h-6V3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="miter"/></svg>
-            <strong>Скорость</strong>
-            <span>Пуш без дайджеста</span>
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M7 7V5h10v2M8 11v6M12 11v6M16 11v6M6 21h12" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-            <strong>Фильтры</strong>
-            <span>Цена · комнаты · район</span>
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-4.4-7-11a7 7 0 0114 0c0 6.6-7 11-7 11z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="10" r="2.2" fill="currentColor"/></svg>
-            <strong>Беларусь</strong>
-            <span>Под локальный рынок</span>
-          </li>
-        </ul>
-      </section>
-
-      <footer class="foot">
-        <span class="brand-mini">FlatStalker</span>
-        <a href="https://t.me/bazan_ivan" rel="noopener">@bazan_ivan</a>
+      <footer class="foot reveal">
+        <span><span class="brand-flat">FLAT</span><span class="brand-stalker">STALKER</span></span>
+        <span class="foot-meta">РБ · АРЕНДА</span>
       </footer>
     </main>
 
-    <script src="./app.js"></script>
+    <div class="toast" id="toast" hidden>Сохранение скоро будет доступно</div>
+
+    <script src="app.js?v=7"></script>
   </body>
 </html>
