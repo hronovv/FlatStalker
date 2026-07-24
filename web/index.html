@@ -8,14 +8,227 @@
     />
     <title>FlatStalker</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Syne:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <main class="screen">
-      <p class="eyebrow">FlatStalker</p>
-      <h1 id="greeting">Hello World</h1>
-      <p id="subtitle" class="subtitle">Mini App готов к работе</p>
+    <div class="atmosphere" aria-hidden="true"></div>
+
+    <main class="page">
+      <section class="hero reveal">
+        <p class="brand">FlatStalker</p>
+        <h1 id="greeting">Ловите квартиру раньше остальных</h1>
+        <p id="lead" class="lead">
+          Telegram-бот для Беларуси: новые объявления об аренде приходят
+          уведомлением со ссылкой — пока их не разобрали.
+        </p>
+        <div class="cta-row">
+          <a class="btn btn-primary" id="cta-main" href="https://t.me/" rel="noopener">
+            Открыть бота
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M5 12h14M13 5l7 7-7 7"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </a>
+          <a class="btn btn-ghost" href="#about">О проекте</a>
+        </div>
+
+        <div class="hero-visual" aria-hidden="true">
+          <div class="signal">
+            <span class="pulse"></span>
+            <svg class="radar" viewBox="0 0 240 240">
+              <circle cx="120" cy="120" r="108" />
+              <circle cx="120" cy="120" r="78" />
+              <circle cx="120" cy="120" r="48" />
+              <path class="sweep" d="M120 120 L120 12 A108 108 0 0 1 214 72 Z" />
+              <circle class="blip blip-a" cx="168" cy="72" r="5" />
+              <circle class="blip blip-b" cx="78" cy="150" r="4" />
+              <circle class="blip blip-c" cx="150" cy="168" r="4.5" />
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <section id="about" class="section reveal">
+        <p class="section-label">О проекте</p>
+        <h2>Скорость решает, когда речь об аренде</h2>
+        <p class="section-text">
+          Хорошие квартиры в Беларуси уходят за минуты. FlatStalker следит за
+          источниками объявлений и сразу пушит вам свежие варианты в Telegram —
+          без бесконечного обновления ленты вручную.
+        </p>
+      </section>
+
+      <section class="section reveal">
+        <p class="section-label">Как это работает</p>
+        <h2>Три шага до потока уведомлений</h2>
+        <ol class="steps">
+          <li class="step">
+            <span class="step-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3zM19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14zM6.5 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7.7-1.8z"
+                  fill="currentColor"
+                />
+              </svg>
+            </span>
+            <div>
+              <h3>Подключаете бота</h3>
+              <p>Start в Telegram — аккаунт привязывается автоматически.</p>
+            </div>
+          </li>
+          <li class="step">
+            <span class="step-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M4 6h16M4 12h10M4 18h14"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
+                <circle cx="18" cy="12" r="2.5" fill="currentColor" />
+              </svg>
+            </span>
+            <div>
+              <h3>Задаёте фильтры</h3>
+              <p>Город, бюджет, комнаты, районы — только то, что нужно вам.</p>
+            </div>
+          </li>
+          <li class="step">
+            <span class="step-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M6 9a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M10 19a2 2 0 0 0 4 0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </span>
+            <div>
+              <h3>Получаете сигнал</h3>
+              <p>Новое объявление → уведомление со ссылкой в одно касание.</p>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <section class="section reveal">
+        <p class="section-label">Возможности</p>
+        <h2>Собрано под реальный поиск жилья</h2>
+        <ul class="features">
+          <li class="feature">
+            <span class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <circle
+                  cx="11"
+                  cy="11"
+                  r="7"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                />
+                <path
+                  d="M20 20l-3.5-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </span>
+            <h3>Мониторинг выдачи</h3>
+            <p>Постоянный обход площадок и быстрый дедуп объявлений.</p>
+          </li>
+          <li class="feature">
+            <span class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M13 2L4 14h7l-1 8 10-14h-7l0-6z"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <h3>Мгновенный пуш</h3>
+            <p>Ссылка в Telegram сразу, без дайджестов «раз в час».</p>
+          </li>
+          <li class="feature">
+            <span class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M12 21s-7-4.5-7-11a7 7 0 0 1 14 0c0 6.5-7 11-7 11z"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linejoin="round"
+                />
+                <circle cx="12" cy="10" r="2.5" fill="currentColor" />
+              </svg>
+            </span>
+            <h3>Фокус на Беларуси</h3>
+            <p>Районы, привычные источники и сценарий «нужно вчера».</p>
+          </li>
+          <li class="feature">
+            <span class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <rect
+                  x="4"
+                  y="4"
+                  width="16"
+                  height="16"
+                  rx="3"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                />
+                <path
+                  d="M8 12h8M12 8v8"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </span>
+            <h3>Гибкие фильтры</h3>
+            <p>Настройте один раз — дальше бот работает за вас.</p>
+          </li>
+        </ul>
+      </section>
+
+      <footer class="footer reveal">
+        <p class="brand brand-sm">FlatStalker</p>
+        <p class="footer-text">
+          Ловите аренду первыми. Вопросы —
+          <a href="https://t.me/bazan_ivan" rel="noopener">@bazan_ivan</a>
+        </p>
+      </footer>
     </main>
+
     <script src="./app.js"></script>
   </body>
 </html>
