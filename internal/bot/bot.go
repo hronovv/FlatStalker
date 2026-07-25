@@ -12,10 +12,11 @@ import (
 )
 
 type Bot struct {
-	ctx    context.Context
-	api    *bot.Bot
-	config *config.Config
-	users  *repository.Users
+	ctx      context.Context
+	api      *bot.Bot
+	config   *config.Config
+	users    *repository.Users
+	listings *repository.Listings
 }
 
 func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool) (*Bot, error) {
@@ -25,10 +26,11 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool) (*Bot, err
 	}
 
 	b := &Bot{
-		ctx:    ctx,
-		api:    api,
-		config: cfg,
-		users:  repository.NewUsers(pool),
+		ctx:      ctx,
+		api:      api,
+		config:   cfg,
+		users:    repository.NewUsers(pool),
+		listings: repository.NewListings(pool),
 	}
 	b.registerHandlers()
 	return b, nil
@@ -36,6 +38,7 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool) (*Bot, err
 
 func (b *Bot) registerHandlers() {
 	b.api.RegisterHandler(bot.HandlerTypeMessageText, "start", bot.MatchTypeCommand, b.startHandler)
+	b.api.RegisterHandler(bot.HandlerTypeMessageText, "links", bot.MatchTypeCommand, b.linksHandler)
 	b.api.RegisterHandler(bot.HandlerTypeMessageText, "help", bot.MatchTypeCommand, b.helpHandler)
 }
 

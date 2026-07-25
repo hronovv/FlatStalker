@@ -1,5 +1,11 @@
 const tg = window.Telegram?.WebApp;
 
+const params = new URLSearchParams(location.search);
+const API_BASE =
+  params.get("api") ||
+  window.FLATSTALKER_API ||
+  "http://127.0.0.1:8080";
+
 if (tg) {
   tg.ready();
   tg.expand();
@@ -9,8 +15,9 @@ if (tg) {
 
 const user = tg?.initDataUnsafe?.user;
 const hello = document.getElementById("hello");
-const form = document.getElementById("filters-form");
-const note = document.getElementById("form-note");
+const linkForm = document.getElementById("link-form");
+const linkNote = document.getElementById("link-note");
+const linkSubmit = document.getElementById("link-submit");
 const toast = document.getElementById("toast");
 const roomsInput = document.getElementById("rooms-input");
 const roomButtons = document.querySelectorAll(".seg-btn");
@@ -43,9 +50,56 @@ function showToast(message) {
   }, 2200);
 }
 
-form?.addEventListener("submit", (event) => {
+function chatID() {
+  return user?.id ?? null;
+}
+
+linkForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
-  note?.classList.add("is-flash");
-  showToast("Сохранение скоро будет доступно");
-  setTimeout(() => note?.classList.remove("is-flash"), 700);
+
+  const chatId = chatID();
+  if (!chatId) {
+    showToast("Открой Mini App из Telegram");
+    return;
+  }
+
+  const url = String(new FormData(linkForm).get("url") || "").trim();
+  if (!url) {
+    showToast("Вставь ссылку");
+    return;
+  }
+
+  if (linkSubmit) linkSubmit.disabled = true;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/links`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, url }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(body.error || `HTTP ${res.status}`);
+    }
+
+    if (body.created === false) {
+      showToast("Такая ссылка уже есть");
+      if (linkNote) linkNote.textContent = "Дубликат не сохраняем. Список: /links";
+    } else {
+      showToast("Ссылка добавлена");
+      if (linkNote) linkNote.textContent = "Добавлено. В боте: /links";
+      linkForm.reset();
+    }
+    linkNote?.classList.add("is-flash");
+    setTimeout(() => linkNote?.classList.remove("is-flash"), 700);
+  } catch (err) {
+    console.error(err);
+    showToast("Не удалось добавить");
+    if (linkNote) {
+      linkNote.textContent =
+        "Ошибка. Проверь, что backend запущен и api= доступен.";
+    }
+  } finally {
+    if (linkSubmit) linkSubmit.disabled = false;
+  }
 });

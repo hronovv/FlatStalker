@@ -23,7 +23,7 @@
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=7" />
+    <link rel="stylesheet" href="styles.css?v=9" />
   </head>
   <body>
     <div class="fx" aria-hidden="true">
@@ -108,21 +108,27 @@
             <input type="hidden" name="rooms" id="rooms-input" value="" />
           </div>
 
+          <p class="form-note">Фильтры пока в preview — сохранение подключим позже.</p>
+        </form>
+
+        <form class="form link-form" id="link-form" autocomplete="off">
           <label class="field">
-            <span class="label">Ссылка на поиск</span>
+            <span class="label">Ссылка</span>
             <input
               type="url"
-              name="search_url"
-              placeholder="Ссылка с площадки объявлений"
+              name="url"
+              id="link-url"
+              placeholder="https://…"
+              required
             />
           </label>
 
-          <button class="btn" type="submit">
-            <span>Сохранить фильтры</span>
+          <button class="btn" type="submit" id="link-submit">
+            <span>Добавить ссылку</span>
             <span class="btn-shine" aria-hidden="true"></span>
           </button>
-          <p class="form-note" id="form-note">
-            Можно потыкать поля — сохранение подключим совсем скоро.
+          <p class="form-note" id="link-note">
+            Ссылка сохранится в боте. Список: команда /links
           </p>
         </form>
       </section>
@@ -253,6 +259,6 @@
 
     <div class="toast" id="toast" hidden>Сохранение скоро будет доступно</div>
 
-    <script src="app.js?v=7"></script>
+    <script src="app.js?v=9"></script>
   </body>
 </html>

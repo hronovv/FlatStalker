@@ -6,9 +6,11 @@ import (
 	"os"
 	"os/signal"
 
+	"flat-stalker/internal/api"
 	appbot "flat-stalker/internal/bot"
 	"flat-stalker/internal/config"
 	"flat-stalker/internal/db"
+	"flat-stalker/internal/repository"
 
 	"github.com/gin-gonic/gin"
 )
@@ -30,7 +32,14 @@ func main() {
 
 	gin.SetMode(cfg.App.GinMode)
 	router := gin.Default()
+	router.Use(api.CORS(cfg.CORS.Origins))
 	router.POST("/message", tgBot.Message)
+
+	links := &api.LinksHandler{
+		Users:    repository.NewUsers(pool),
+		Listings: repository.NewListings(pool),
+	}
+	links.Register(router)
 
 	go tgBot.Start()
 

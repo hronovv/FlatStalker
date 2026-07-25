@@ -226,6 +226,12 @@ a:hover {
   margin-bottom: 16px;
 }
 
+.link-form {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
 .about-lead p {
   margin-top: 10px;
 }
