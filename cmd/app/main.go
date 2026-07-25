@@ -6,38 +6,43 @@ import (
 	"os"
 	"os/signal"
 
+	"flat-stalker/internal/config"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
-	"github.com/joho/godotenv"
 )
 
 func main() {
+	cfg := config.MustLoad()
+
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
-	godotenv.Load(".env")
-	token := os.Getenv("BOT_TOKEN")
-	b, err := bot.New(token)
+
+	b, err := bot.New(cfg.Telegram.BotToken)
 	if err != nil {
 		panic(err)
 	}
 
-	TgBot := Bot{
+	tgBot := Bot{
 		b:   b,
 		ctx: ctx,
 	}
 
-	b.RegisterHandler(bot.HandlerTypeMessageText, "help", bot.MatchTypeCommand, TgBot.helpHandler)
+	b.RegisterHandler(bot.HandlerTypeMessageText, "help", bot.MatchTypeCommand, tgBot.helpHandler)
 
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
-	router.POST("/message", TgBot.Message)
+	router.POST("/message", tgBot.Message)
 
 	go func() {
 		b.Start(ctx)
 	}()
 
-	router.Run(":8080")
+	log.Printf("http listening on %s", cfg.Server.Addr)
+	if err := router.Run(cfg.Server.Addr); err != nil {
+		log.Fatal(err)
+	}
 }
 
 type Bot struct {
@@ -50,17 +55,17 @@ type MessageDTO struct {
 	ChatID string `json:"chat_id"`
 }
 
-func (TgBot *Bot) Message(c *gin.Context) {
+func (tgBot *Bot) Message(c *gin.Context) {
 	var message MessageDTO
 	if err := c.BindJSON(&message); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	TgBot.SendMessage(message.Msg, message.ChatID)
+	tgBot.SendMessage(message.Msg, message.ChatID)
 }
 
-func (TgBot *Bot) helpHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
-	_, err := TgBot.b.SendMessage(TgBot.ctx, &bot.SendMessageParams{
+func (tgBot *Bot) helpHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
+	_, err := tgBot.b.SendMessage(tgBot.ctx, &bot.SendMessageParams{
 		ChatID:    update.Message.Chat.ID,
 		Text:      "По всем вопросам пишите сюда <b>@bazan_ivan</b>",
 		ParseMode: models.ParseModeHTML,
@@ -70,9 +75,12 @@ func (TgBot *Bot) helpHandler(ctx context.Context, b *bot.Bot, update *models.Up
 	}
 }
 
-func (TgBot *Bot) SendMessage(message, chat_id string) {
-	TgBot.b.SendMessage(TgBot.ctx, &bot.SendMessageParams{
-		ChatID: chat_id,
+func (tgBot *Bot) SendMessage(message, chatID string) {
+	_, err := tgBot.b.SendMessage(tgBot.ctx, &bot.SendMessageParams{
+		ChatID: chatID,
 		Text:   message,
 	})
+	if err != nil {
+		log.Println(err)
+	}
 }
