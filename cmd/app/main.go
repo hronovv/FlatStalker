@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -20,7 +21,7 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
-	pool := db.MustNewPool(ctx, cfg.Database.URL)
+	pool := db.MustNewPool(ctx, cfg.Database)
 	defer pool.Close()
 	log.Println("database connected")
 
@@ -30,13 +31,14 @@ func main() {
 	}
 
 	tgBot := Bot{
-		b:   b,
-		ctx: ctx,
+		b:      b,
+		ctx:    ctx,
+		config: cfg,
 	}
 
 	b.RegisterHandler(bot.HandlerTypeMessageText, "help", bot.MatchTypeCommand, tgBot.helpHandler)
 
-	gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(cfg.App.GinMode)
 	router := gin.Default()
 	router.POST("/message", tgBot.Message)
 
@@ -51,8 +53,9 @@ func main() {
 }
 
 type Bot struct {
-	ctx context.Context
-	b   *bot.Bot
+	ctx    context.Context
+	b      *bot.Bot
+	config *config.Config
 }
 
 type MessageDTO struct {
@@ -72,7 +75,7 @@ func (tgBot *Bot) Message(c *gin.Context) {
 func (tgBot *Bot) helpHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	_, err := tgBot.b.SendMessage(tgBot.ctx, &bot.SendMessageParams{
 		ChatID:    update.Message.Chat.ID,
-		Text:      "По всем вопросам пишите сюда <b>@bazan_ivan</b>",
+		Text:      fmt.Sprintf("По всем вопросам пишите сюда <b>%s</b>", tgBot.config.Telegram.SupportContact),
 		ParseMode: models.ParseModeHTML,
 	})
 	if err != nil {

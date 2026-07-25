@@ -15,6 +15,11 @@ type Config struct {
 	Database Database
 	Telegram Telegram
 	CORS     CORS
+	App      App
+}
+
+type App struct {
+	GinMode string
 }
 
 type Server struct {
@@ -24,66 +29,76 @@ type Server struct {
 }
 
 type Database struct {
-	URL string
+	URL             string
+	MaxConns        int32
+	MinConns        int32
+	MaxConnLifetime  time.Duration
+	MaxConnIdleTime time.Duration
+	PingTimeout     time.Duration
 }
 
 type Telegram struct {
-	BotToken string
+	BotToken       string
+	SupportContact string
 }
 
 type CORS struct {
 	Origins []string
 }
 
-
+// MustLoad reads .env and environment. All keys are required — no hardcoded defaults.
 func MustLoad() *Config {
 	_ = godotenv.Load(".env")
 
 	cfg := &Config{
+		App: App{
+			GinMode: mustEnv("GIN_MODE"),
+		},
 		Server: Server{
-			Addr:         getEnv("HTTP_ADDR", ":8080"),
-			ReadTimeout:  getDuration("HTTP_READ_TIMEOUT", 10*time.Second),
-			WriteTimeout: getDuration("HTTP_WRITE_TIMEOUT", 10*time.Second),
+			Addr:         mustEnv("HTTP_ADDR"),
+			ReadTimeout:  mustDuration("HTTP_READ_TIMEOUT"),
+			WriteTimeout: mustDuration("HTTP_WRITE_TIMEOUT"),
 		},
 		Database: Database{
-			URL: strings.TrimSpace(os.Getenv("DATABASE_URL")),
+			URL:             mustEnv("DATABASE_URL"),
+			MaxConns:        mustInt32("DB_MAX_CONNS"),
+			MinConns:        mustInt32("DB_MIN_CONNS"),
+			MaxConnLifetime:  mustDuration("DB_MAX_CONN_LIFETIME"),
+			MaxConnIdleTime: mustDuration("DB_MAX_CONN_IDLE_TIME"),
+			PingTimeout:     mustDuration("DB_PING_TIMEOUT"),
 		},
 		Telegram: Telegram{
-			BotToken: strings.TrimSpace(os.Getenv("BOT_TOKEN")),
+			BotToken:       mustEnv("BOT_TOKEN"),
+			SupportContact: mustEnv("TELEGRAM_SUPPORT"),
 		},
 		CORS: CORS{
-			Origins: splitCSV(getEnv(
-				"CORS_ORIGINS",
-				"http://localhost:5173,https://hronovv.github.io",
-			)),
+			Origins: splitCSV(mustEnv("CORS_ORIGINS")),
 		},
 	}
 
-	if cfg.Telegram.BotToken == "" {
-		log.Fatal("config: BOT_TOKEN is required")
+	if cfg.Database.MaxConns < 1 {
+		log.Fatal("config: DB_MAX_CONNS must be >= 1")
 	}
-	if cfg.Database.URL == "" {
-		log.Fatal("config: DATABASE_URL is required")
+	if cfg.Database.MinConns < 0 || cfg.Database.MinConns > cfg.Database.MaxConns {
+		log.Fatal("config: DB_MIN_CONNS must be between 0 and DB_MAX_CONNS")
 	}
-	if cfg.Server.Addr == "" {
-		log.Fatal("config: HTTP_ADDR is required")
+	if len(cfg.CORS.Origins) == 0 {
+		log.Fatal("config: CORS_ORIGINS must contain at least one origin")
 	}
 
 	return cfg
 }
 
-func getEnv(key, fallback string) string {
-	if v := strings.TrimSpace(os.Getenv(key)); v != "" {
-		return v
+func mustEnv(key string) string {
+	v := strings.TrimSpace(os.Getenv(key))
+	if v == "" {
+		log.Fatalf("config: %s is required", key)
 	}
-	return fallback
+	return v
 }
 
-func getDuration(key string, fallback time.Duration) time.Duration {
-	raw := strings.TrimSpace(os.Getenv(key))
-	if raw == "" {
-		return fallback
-	}
+func mustDuration(key string) time.Duration {
+	raw := mustEnv(key)
 	if secs, err := strconv.Atoi(raw); err == nil {
 		return time.Duration(secs) * time.Second
 	}
@@ -92,6 +107,15 @@ func getDuration(key string, fallback time.Duration) time.Duration {
 		log.Fatalf("config: invalid %s=%q", key, raw)
 	}
 	return d
+}
+
+func mustInt32(key string) int32 {
+	raw := mustEnv(key)
+	n, err := strconv.ParseInt(raw, 10, 32)
+	if err != nil {
+		log.Fatalf("config: invalid %s=%q", key, raw)
+	}
+	return int32(n)
 }
 
 func splitCSV(raw string) []string {
