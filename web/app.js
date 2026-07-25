@@ -79,6 +79,11 @@ linkForm?.addEventListener("submit", async (event) => {
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) {
+      if (res.status === 404) {
+        showToast("Сначала нажми /start в боте");
+        if (linkNote) linkNote.textContent = "Нужен /start в боте, потом снова добавь ссылку.";
+        return;
+      }
       throw new Error(body.error || `HTTP ${res.status}`);
     }
 

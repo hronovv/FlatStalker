@@ -41,9 +41,13 @@ func (h *LinksHandler) Add(c *gin.Context) {
 		return
 	}
 
-	user, err := h.Users.CreateByChatID(c.Request.Context(), req.ChatID)
+	user, err := h.Users.GetByChatID(c.Request.Context(), req.ChatID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to resolve user"})
+		return
+	}
+	if user == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found, press /start in the bot first"})
 		return
 	}
 

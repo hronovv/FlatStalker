@@ -16,19 +16,11 @@ func (b *Bot) startHandler(ctx context.Context, _ *bot.Bot, update *models.Updat
 	}
 
 	chatID := update.Message.Chat.ID
-	user, err := b.users.CreateByChatID(ctx, chatID)
-	if err != nil {
+	if _, err := b.users.CreateByChatID(ctx, chatID); err != nil {
 		log.Printf("start: create user chat_id=%d: %v", chatID, err)
-		_, _ = b.api.SendMessage(b.ctx, &bot.SendMessageParams{
-			ChatID: chatID,
-			Text:   "Не удалось сохранить профиль. Попробуй ещё раз чуть позже.",
-		})
-		return
 	}
 
-	log.Printf("start: user id=%d chat_id=%d", user.ID, user.ChatID)
-
-	_, err = b.api.SendMessage(b.ctx, &bot.SendMessageParams{
+	_, err := b.api.SendMessage(b.ctx, &bot.SendMessageParams{
 		ChatID: chatID,
 		Text:   "Привет! Ты в FlatStalker. Открой кабинет через кнопку меню и добавь ссылки. Команда /links покажет все сохранённые.",
 	})
