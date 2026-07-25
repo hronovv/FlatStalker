@@ -7,6 +7,7 @@ import (
 	"os/signal"
 
 	"flat-stalker/internal/config"
+	"flat-stalker/internal/db"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-telegram/bot"
@@ -18,6 +19,10 @@ func main() {
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
+
+	pool := db.MustNewPool(ctx, cfg.Database.URL)
+	defer pool.Close()
+	log.Println("database connected")
 
 	b, err := bot.New(cfg.Telegram.BotToken)
 	if err != nil {
