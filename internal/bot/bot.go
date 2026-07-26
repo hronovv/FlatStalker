@@ -8,6 +8,7 @@ import (
 	"flat-stalker/internal/repository"
 
 	"github.com/go-telegram/bot"
+	"github.com/go-telegram/bot/models"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -20,7 +21,7 @@ type Bot struct {
 }
 
 func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool) (*Bot, error) {
-	api, err := bot.New(cfg.Telegram.BotToken)
+	api, err := bot.New(cfg.Telegram.BotToken, bot.WithDefaultHandler(func(context.Context, *bot.Bot, *models.Update) {}))
 	if err != nil {
 		return nil, err
 	}
