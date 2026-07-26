@@ -6,11 +6,16 @@ const API_BASE =
   window.FLATSTALKER_API ||
   "http://127.0.0.1:8080";
 
+function applyTelegramChrome() {
+  if (!tg) return;
+  if (tg.setHeaderColor) tg.setHeaderColor("#08111f");
+  if (tg.setBackgroundColor) tg.setBackgroundColor("#08111f");
+}
+
 if (tg) {
   tg.ready();
   tg.expand();
-  if (tg.setHeaderColor) tg.setHeaderColor("#070707");
-  if (tg.setBackgroundColor) tg.setBackgroundColor("#070707");
+  applyTelegramChrome();
 }
 
 const user = tg?.initDataUnsafe?.user;
