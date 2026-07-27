@@ -73,6 +73,13 @@ linkForm?.addEventListener("submit", async (event) => {
     showToast("Вставь ссылку");
     return;
   }
+  if (!/kufar\.by/i.test(url)) {
+    showToast("Нужна ссылка kufar.by");
+    if (linkNote) {
+      linkNote.textContent = "Пока парсим только поиск аренды на Kufar.";
+    }
+    return;
+  }
 
   if (linkSubmit) linkSubmit.disabled = true;
 
@@ -87,6 +94,12 @@ linkForm?.addEventListener("submit", async (event) => {
       if (res.status === 404) {
         showToast("Сначала нажми /start в боте");
         if (linkNote) linkNote.textContent = "Нужен /start в боте, потом снова добавь ссылку.";
+        return;
+      }
+      if (res.status === 400) {
+        const msg = body.error || "Некорректная ссылка Kufar";
+        showToast(msg);
+        if (linkNote) linkNote.textContent = msg;
         return;
       }
       throw new Error(body.error || `HTTP ${res.status}`);

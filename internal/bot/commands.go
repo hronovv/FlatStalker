@@ -22,7 +22,7 @@ func (b *Bot) startHandler(ctx context.Context, _ *bot.Bot, update *models.Updat
 
 	_, err := b.api.SendMessage(b.ctx, &bot.SendMessageParams{
 		ChatID: chatID,
-		Text:   "Привет! Ты в FlatStalker. Открой кабинет через кнопку меню и добавь ссылки. Команда /links покажет все сохранённые.",
+		Text:   "Привет! Ты в FlatStalker. Открой кабинет и добавь ссылку поиска аренды с Kufar. Команда /links покажет сохранённые.",
 	})
 	if err != nil {
 		log.Println(err)
@@ -48,7 +48,7 @@ func (b *Bot) linksHandler(ctx context.Context, _ *bot.Bot, update *models.Updat
 	if len(urls) == 0 {
 		_, _ = b.api.SendMessage(b.ctx, &bot.SendMessageParams{
 			ChatID: chatID,
-			Text:   "Пока нет сохранённых ссылок. Добавь их в кабинете Mini App.",
+			Text:   "Пока нет сохранённых ссылок. Добавь ссылку поиска Kufar в кабинете Mini App.",
 		})
 		return
 	}

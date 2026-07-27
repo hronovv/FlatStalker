@@ -2,10 +2,10 @@ package api
 
 import (
 	"net/http"
-	"net/url"
 	"strings"
 
 	"flat-stalker/internal/repository"
+	"flat-stalker/internal/source/kufar"
 
 	"github.com/gin-gonic/gin"
 )
@@ -36,8 +36,8 @@ func (h *LinksHandler) Add(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "url is required"})
 		return
 	}
-	if _, err := url.ParseRequestURI(link); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid url"})
+	if err := kufar.ValidateSearchURL(link); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 

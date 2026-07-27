@@ -56,3 +56,11 @@ func (b *Bot) SendMessage(message, chatID string) {
 		log.Println(err)
 	}
 }
+
+func (b *Bot) NotifyAd(ctx context.Context, chatID int64, text string) error {
+	_, err := b.api.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: chatID,
+		Text:   text,
+	})
+	return err
+}

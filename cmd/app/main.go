@@ -11,6 +11,7 @@ import (
 	"flat-stalker/internal/config"
 	"flat-stalker/internal/db"
 	"flat-stalker/internal/repository"
+	"flat-stalker/internal/worker"
 
 	"github.com/gin-gonic/gin"
 )
@@ -30,6 +31,12 @@ func main() {
 		panic(err)
 	}
 
+	listings := repository.NewListings(pool)
+	seen := repository.NewSeenAds(pool)
+
+	go tgBot.Start()
+	go worker.New(cfg.Worker.Interval, listings, seen, tgBot).Start(ctx)
+
 	gin.SetMode(cfg.App.GinMode)
 	router := gin.Default()
 	router.Use(api.CORS(cfg.CORS.Origins))
@@ -37,11 +44,9 @@ func main() {
 
 	links := &api.LinksHandler{
 		Users:    repository.NewUsers(pool),
-		Listings: repository.NewListings(pool),
+		Listings: listings,
 	}
 	links.Register(router)
-
-	go tgBot.Start()
 
 	log.Printf("http listening on %s", cfg.Server.Addr)
 	if err := router.Run(cfg.Server.Addr); err != nil {

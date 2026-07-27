@@ -14,8 +14,13 @@ type Config struct {
 	Server   Server
 	Database Database
 	Telegram Telegram
+	Worker   Worker
 	CORS     CORS
 	App      App
+}
+
+type Worker struct {
+	Interval time.Duration
 }
 
 type App struct {
@@ -70,6 +75,9 @@ func MustLoad() *Config {
 		Telegram: Telegram{
 			BotToken:       mustEnv("BOT_TOKEN"),
 			SupportContact: mustEnv("TELEGRAM_SUPPORT"),
+		},
+		Worker: Worker{
+			Interval: mustDuration("WORKER_INTERVAL"),
 		},
 		CORS: CORS{
 			Origins: splitCSV(mustEnv("CORS_ORIGINS")),

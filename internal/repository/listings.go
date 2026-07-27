@@ -14,6 +14,14 @@ type Listings struct {
 	pool *pgxpool.Pool
 }
 
+// Watch is a saved search URL owned by a Telegram user.
+type Watch struct {
+	ID     int64
+	UserID int64
+	ChatID int64
+	URL    string
+}
+
 func NewListings(pool *pgxpool.Pool) *Listings {
 	return &Listings{pool: pool}
 }
@@ -62,4 +70,31 @@ ORDER BY l.id;
 		return nil, fmt.Errorf("list listings rows: %w", err)
 	}
 	return urls, nil
+}
+
+func (r *Listings) ListWatches(ctx context.Context) ([]Watch, error) {
+	const q = `
+SELECT l.id, l.user_id, u.chat_id, l.url
+FROM listings l
+JOIN users u ON u.id = l.user_id
+ORDER BY l.id;
+`
+	rows, err := r.pool.Query(ctx, q)
+	if err != nil {
+		return nil, fmt.Errorf("list watches: %w", err)
+	}
+	defer rows.Close()
+
+	watches := make([]Watch, 0)
+	for rows.Next() {
+		var w Watch
+		if err := rows.Scan(&w.ID, &w.UserID, &w.ChatID, &w.URL); err != nil {
+			return nil, fmt.Errorf("scan watch: %w", err)
+		}
+		watches = append(watches, w)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("watches rows: %w", err)
+	}
+	return watches, nil
 }
