@@ -65,11 +65,12 @@ a:hover {
 .top.reveal { animation-delay: 30ms; }
 .hero.reveal { animation-delay: 80ms; }
 .filters.reveal { animation-delay: 130ms; }
-.acc.reveal:nth-of-type(1) { animation-delay: 180ms; }
-.acc.reveal:nth-of-type(2) { animation-delay: 230ms; }
-.acc.reveal:nth-of-type(3) { animation-delay: 280ms; }
-.acc.reveal:nth-of-type(4) { animation-delay: 330ms; }
-.foot.reveal { animation-delay: 380ms; }
+.my-links.reveal { animation-delay: 160ms; }
+.acc.reveal:nth-of-type(1) { animation-delay: 200ms; }
+.acc.reveal:nth-of-type(2) { animation-delay: 250ms; }
+.acc.reveal:nth-of-type(3) { animation-delay: 300ms; }
+.acc.reveal:nth-of-type(4) { animation-delay: 350ms; }
+.foot.reveal { animation-delay: 400ms; }
 
 .top {
   display: grid;
@@ -379,6 +380,104 @@ a:hover {
 
 .form-note.is-flash {
   color: var(--accent);
+}
+
+.links-count {
+  color: var(--muted);
+  font: 600 0.78rem/1 var(--mono);
+}
+
+.link-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.link-item {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.link-item.is-paused {
+  opacity: 0.72;
+}
+
+.link-item-url {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font: 500 0.82rem/1.4 var(--mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.link-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.link-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font: 600 0.72rem/1 var(--mono);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.link-badge::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.link-item.is-paused .link-badge::before {
+  background: #8498ad;
+}
+
+.link-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.link-action {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: 600 0.78rem var(--font);
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.link-action:hover {
+  border-color: var(--accent);
+  background: rgba(65, 217, 196, 0.08);
+}
+
+.link-action:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.link-action.is-danger:hover {
+  border-color: #ff7b7b;
+  background: rgba(255, 123, 123, 0.08);
+  color: #ffb4b4;
 }
 
 .acc {

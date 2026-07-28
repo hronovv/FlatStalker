@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"flat-stalker/internal/models"
@@ -20,6 +21,7 @@ type Watch struct {
 	UserID int64
 	ChatID int64
 	URL    string
+	Paused bool
 }
 
 func NewListings(pool *pgxpool.Pool) *Listings {
@@ -31,10 +33,12 @@ func (r *Listings) Add(ctx context.Context, userID int64, url string) (*models.L
 INSERT INTO listings (user_id, url)
 VALUES ($1, $2)
 ON CONFLICT (user_id, url) DO NOTHING
-RETURNING id, user_id, url;
+RETURNING id, user_id, url, paused;
 `
 	listing := &models.Listing{}
-	err := r.pool.QueryRow(ctx, q, userID, url).Scan(&listing.ID, &listing.UserID, &listing.URL)
+	err := r.pool.QueryRow(ctx, q, userID, url).Scan(
+		&listing.ID, &listing.UserID, &listing.URL, &listing.Paused,
+	)
 	if err == nil {
 		return listing, true, nil
 	}
@@ -44,9 +48,9 @@ RETURNING id, user_id, url;
 	return nil, false, fmt.Errorf("add listing: %w", err)
 }
 
-func (r *Listings) ListURLsByChatID(ctx context.Context, chatID int64) ([]string, error) {
+func (r *Listings) ListByChatID(ctx context.Context, chatID int64) ([]models.Listing, error) {
 	const q = `
-SELECT l.url
+SELECT l.id, l.user_id, l.url, l.paused
 FROM listings l
 JOIN users u ON u.id = l.user_id
 WHERE u.chat_id = $1
@@ -58,25 +62,76 @@ ORDER BY l.id;
 	}
 	defer rows.Close()
 
-	urls := make([]string, 0)
+	out := make([]models.Listing, 0)
 	for rows.Next() {
-		var url string
-		if err := rows.Scan(&url); err != nil {
+		var l models.Listing
+		if err := rows.Scan(&l.ID, &l.UserID, &l.URL, &l.Paused); err != nil {
 			return nil, fmt.Errorf("scan listing: %w", err)
 		}
-		urls = append(urls, url)
+		out = append(out, l)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("list listings rows: %w", err)
 	}
+	return out, nil
+}
+
+func (r *Listings) ListURLsByChatID(ctx context.Context, chatID int64) ([]string, error) {
+	listings, err := r.ListByChatID(ctx, chatID)
+	if err != nil {
+		return nil, err
+	}
+	urls := make([]string, len(listings))
+	for i, l := range listings {
+		urls[i] = l.URL
+	}
 	return urls, nil
+}
+
+func (r *Listings) SetPaused(ctx context.Context, listingID, chatID int64, paused bool) (*models.Listing, error) {
+	const q = `
+UPDATE listings l
+SET paused = $3
+FROM users u
+WHERE l.id = $1
+  AND l.user_id = u.id
+  AND u.chat_id = $2
+RETURNING l.id, l.user_id, l.url, l.paused;
+`
+	listing := &models.Listing{}
+	err := r.pool.QueryRow(ctx, q, listingID, chatID, paused).Scan(
+		&listing.ID, &listing.UserID, &listing.URL, &listing.Paused,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("set paused: %w", err)
+	}
+	return listing, nil
+}
+
+func (r *Listings) Delete(ctx context.Context, listingID, chatID int64) (bool, error) {
+	const q = `
+DELETE FROM listings l
+USING users u
+WHERE l.id = $1
+  AND l.user_id = u.id
+  AND u.chat_id = $2;
+`
+	tag, err := r.pool.Exec(ctx, q, listingID, chatID)
+	if err != nil {
+		return false, fmt.Errorf("delete listing: %w", err)
+	}
+	return tag.RowsAffected() > 0, nil
 }
 
 func (r *Listings) ListWatches(ctx context.Context) ([]Watch, error) {
 	const q = `
-SELECT l.id, l.user_id, u.chat_id, l.url
+SELECT l.id, l.user_id, u.chat_id, l.url, l.paused
 FROM listings l
 JOIN users u ON u.id = l.user_id
+WHERE l.paused = false
 ORDER BY l.id;
 `
 	rows, err := r.pool.Query(ctx, q)
@@ -88,7 +143,7 @@ ORDER BY l.id;
 	watches := make([]Watch, 0)
 	for rows.Next() {
 		var w Watch
-		if err := rows.Scan(&w.ID, &w.UserID, &w.ChatID, &w.URL); err != nil {
+		if err := rows.Scan(&w.ID, &w.UserID, &w.ChatID, &w.URL, &w.Paused); err != nil {
 			return nil, fmt.Errorf("scan watch: %w", err)
 		}
 		watches = append(watches, w)

@@ -35,7 +35,7 @@ func (b *Bot) linksHandler(ctx context.Context, _ *bot.Bot, update *models.Updat
 	}
 
 	chatID := update.Message.Chat.ID
-	urls, err := b.listings.ListURLsByChatID(ctx, chatID)
+	listings, err := b.listings.ListByChatID(ctx, chatID)
 	if err != nil {
 		log.Printf("links: chat_id=%d: %v", chatID, err)
 		_, _ = b.api.SendMessage(b.ctx, &bot.SendMessageParams{
@@ -45,7 +45,7 @@ func (b *Bot) linksHandler(ctx context.Context, _ *bot.Bot, update *models.Updat
 		return
 	}
 
-	if len(urls) == 0 {
+	if len(listings) == 0 {
 		_, _ = b.api.SendMessage(b.ctx, &bot.SendMessageParams{
 			ChatID: chatID,
 			Text:   "Пока нет сохранённых ссылок. Добавь ссылку поиска Kufar в кабинете Mini App.",
@@ -54,9 +54,13 @@ func (b *Bot) linksHandler(ctx context.Context, _ *bot.Bot, update *models.Updat
 	}
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("Твои ссылки (%d):\n\n", len(urls)))
-	for i, u := range urls {
-		sb.WriteString(fmt.Sprintf("%d. %s\n", i+1, u))
+	sb.WriteString(fmt.Sprintf("Твои ссылки (%d):\n\n", len(listings)))
+	for i, l := range listings {
+		status := "активна"
+		if l.Paused {
+			status = "пауза"
+		}
+		sb.WriteString(fmt.Sprintf("%d. [%s] %s\n", i+1, status, l.URL))
 	}
 
 	_, err = b.api.SendMessage(b.ctx, &bot.SendMessageParams{

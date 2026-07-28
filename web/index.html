@@ -23,7 +23,7 @@
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=12" />
+    <link rel="stylesheet" href="styles.css?v=13" />
   </head>
   <body>
     <main class="page">
@@ -130,9 +130,20 @@
             <span class="btn-shine" aria-hidden="true"></span>
           </button>
           <p class="form-note" id="link-note">
-            Только ссылка поиска аренды на Kufar. Список: /links
+            Только ссылка поиска аренды на Kufar.
           </p>
         </form>
+      </section>
+
+      <section class="panel my-links reveal">
+        <div class="panel-head">
+          <h2>Мои ссылки</h2>
+          <span class="links-count" id="links-count"></span>
+        </div>
+        <p class="hint" id="links-empty">
+          Пока пусто — добавь ссылку поиска выше.
+        </p>
+        <ul class="link-list" id="link-list" hidden></ul>
       </section>
 
       <details class="acc workflow reveal">
@@ -252,6 +263,6 @@
 
     <div class="toast" id="toast" hidden>Сохранение скоро будет доступно</div>
 
-    <script src="app.js?v=12"></script>
+    <script src="app.js?v=13"></script>
   </body>
 </html>
