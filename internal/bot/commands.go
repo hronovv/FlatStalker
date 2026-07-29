@@ -54,13 +54,13 @@ func (b *Bot) linksHandler(ctx context.Context, _ *bot.Bot, update *models.Updat
 	}
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("Твои ссылки (%d):\n\n", len(listings)))
+	fmt.Fprintf(&sb, "Твои ссылки (%d):\n\n", len(listings))
 	for i, l := range listings {
 		status := "активна"
 		if l.Paused {
 			status = "пауза"
 		}
-		sb.WriteString(fmt.Sprintf("%d. [%s] %s\n", i+1, status, l.URL))
+		fmt.Fprintf(&sb, "%d. [%s] %s\n", i+1, status, l.URL)
 	}
 
 	_, err = b.api.SendMessage(b.ctx, &bot.SendMessageParams{
