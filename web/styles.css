@@ -74,10 +74,44 @@ a:hover {
 
 .top {
   display: grid;
-  grid-template-columns: 46px 1fr;
+  grid-template-columns: 46px 1fr auto;
   align-items: center;
   gap: 14px;
   margin-bottom: 20px;
+}
+
+.lang-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-self: start;
+  min-width: 84px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+
+.lang-btn {
+  min-height: 32px;
+  margin: 0;
+  padding: 0 10px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: 700 0.72rem/1 var(--mono);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: color 160ms ease, background 160ms ease;
+}
+
+.lang-btn.is-active {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.lang-btn:not(.is-active):hover {
+  color: var(--text);
+  background: rgba(65, 217, 196, 0.08);
 }
 
 .logo-mark {
