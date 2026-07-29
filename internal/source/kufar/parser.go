@@ -2,6 +2,7 @@ package kufar
 
 import (
 	"fmt"
+	"maps"
 	"net/url"
 	"sort"
 	"strings"
@@ -17,6 +18,10 @@ var pathDefaults = map[string]map[string]string{
 	"snyat":           {"typ": "let"},
 	"kvartiru":        {"cat": "1010"},
 	"bez-posrednikov": {"cmp": "0"},
+}
+
+func isAPIQueryParam(key string) bool {
+	return !strings.HasPrefix(key, "_") && !strings.HasPrefix(key, "r_")
 }
 
 // ParseSearchURL turns a Kufar search page URL into API query params.
@@ -40,15 +45,13 @@ func ParseSearchURL(rawURL string) (map[string]string, error) {
 			continue
 		}
 		if defaults, ok := pathDefaults[segment]; ok {
-			for key, value := range defaults {
-				params[key] = value
-			}
+			maps.Copy(params, defaults)
 		}
 	}
 
 	query := parsed.Query()
 	for key, values := range query {
-		if len(values) == 0 {
+		if !isAPIQueryParam(key) || len(values) == 0 {
 			continue
 		}
 		decoded, err := url.QueryUnescape(values[len(values)-1])
@@ -85,7 +88,6 @@ func ParseSearchURL(rawURL string) (map[string]string, error) {
 	return params, nil
 }
 
-// ValidateSearchURL checks that the URL can be used as a watch target.
 func ValidateSearchURL(rawURL string) error {
 	_, err := ParseSearchURL(strings.TrimSpace(rawURL))
 	return err
