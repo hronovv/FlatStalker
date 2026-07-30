@@ -40,6 +40,7 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool) (*Bot, err
 func (b *Bot) registerHandlers() {
 	b.api.RegisterHandler(bot.HandlerTypeMessageText, "start", bot.MatchTypeCommand, b.startHandler)
 	b.api.RegisterHandler(bot.HandlerTypeMessageText, "links", bot.MatchTypeCommand, b.linksHandler)
+	b.api.RegisterHandler(bot.HandlerTypeMessageText, "status", bot.MatchTypeCommand, b.statusHandler)
 	b.api.RegisterHandler(bot.HandlerTypeMessageText, "help", bot.MatchTypeCommand, b.helpHandler)
 }
 

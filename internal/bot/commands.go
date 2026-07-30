@@ -6,6 +6,8 @@ import (
 	"log"
 	"strings"
 
+	"flat-stalker/internal/plan"
+
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 )
@@ -75,6 +77,51 @@ func (b *Bot) linksHandler(ctx context.Context, _ *bot.Bot, update *models.Updat
 	}
 }
 
+func (b *Bot) statusHandler(ctx context.Context, _ *bot.Bot, update *models.Update) {
+	if update.Message == nil {
+		return
+	}
+
+	chatID := update.Message.Chat.ID
+	user, err := b.users.GetByChatID(ctx, chatID)
+	if err != nil {
+		log.Printf("status: chat_id=%d: %v", chatID, err)
+		_, _ = b.api.SendMessage(b.ctx, &bot.SendMessageParams{
+			ChatID: chatID,
+			Text:   "Не удалось получить статус. Попробуй позже.",
+		})
+		return
+	}
+	if user == nil {
+		_, _ = b.api.SendMessage(b.ctx, &bot.SendMessageParams{
+			ChatID: chatID,
+			Text:   "Сначала нажми /start.",
+		})
+		return
+	}
+
+	userPlan := plan.Normalize(user.Plan)
+	interval := plan.Intervals{
+		Free: b.config.Worker.Free,
+		Plus: b.config.Worker.Plus,
+		Pro:  b.config.Worker.Pro,
+	}.For(userPlan)
+
+	text := fmt.Sprintf(
+		"Твой тариф: %s\nПроверка объявлений: %s",
+		plan.Label(userPlan),
+		plan.FormatIntervalRU(interval),
+	)
+
+	_, err = b.api.SendMessage(b.ctx, &bot.SendMessageParams{
+		ChatID: chatID,
+		Text:   text,
+	})
+	if err != nil {
+		log.Println(err)
+	}
+}
+
 func (b *Bot) helpHandler(ctx context.Context, _ *bot.Bot, update *models.Update) {
 	if update.Message == nil {
 		return
@@ -82,7 +129,7 @@ func (b *Bot) helpHandler(ctx context.Context, _ *bot.Bot, update *models.Update
 
 	_, err := b.api.SendMessage(b.ctx, &bot.SendMessageParams{
 		ChatID:    update.Message.Chat.ID,
-		Text:      fmt.Sprintf("Команды: /start, /links, /help\nВопросы: <b>%s</b>", b.config.Telegram.SupportContact),
+		Text:      fmt.Sprintf("Команды: /start, /links, /status, /help\nВопросы: <b>%s</b>", b.config.Telegram.SupportContact),
 		ParseMode: models.ParseModeHTML,
 	})
 	if err != nil {

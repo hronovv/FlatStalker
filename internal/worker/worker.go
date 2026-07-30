@@ -3,8 +3,10 @@ package worker
 import (
 	"context"
 	"log"
+	"sync"
 	"time"
 
+	"flat-stalker/internal/plan"
 	"flat-stalker/internal/repository"
 	"flat-stalker/internal/source/kufar"
 )
@@ -14,60 +16,83 @@ type Notifier interface {
 }
 
 type Worker struct {
-	interval time.Duration
-	client   *kufar.Client
-	listings *repository.Listings
-	seen     *repository.SeenAds
-	notifier Notifier
+	intervals plan.Intervals
+	client    *kufar.Client
+	listings  *repository.Listings
+	seen      *repository.SeenAds
+	notifier  Notifier
 }
 
 func New(
-	interval time.Duration,
+	intervals plan.Intervals,
 	listings *repository.Listings,
 	seen *repository.SeenAds,
 	notifier Notifier,
 ) *Worker {
 	return &Worker{
-		interval: interval,
-		client:   kufar.NewClient(),
-		listings: listings,
-		seen:     seen,
-		notifier: notifier,
+		intervals: intervals,
+		client:    kufar.NewClient(),
+		listings:  listings,
+		seen:      seen,
+		notifier:  notifier,
 	}
 }
 
 func (w *Worker) Start(ctx context.Context) {
-	log.Printf("worker started, interval=%s", w.interval)
-	w.runOnce(ctx)
+	var wg sync.WaitGroup
+	tiers := []struct {
+		name     string
+		interval time.Duration
+	}{
+		{plan.Pro, w.intervals.Pro},
+		{plan.Plus, w.intervals.Plus},
+		{plan.Free, w.intervals.Free},
+	}
 
-	ticker := time.NewTicker(w.interval)
+	for _, tier := range tiers {
+		wg.Add(1)
+		go func(name string, interval time.Duration) {
+			defer wg.Done()
+			w.runTier(ctx, name, interval)
+		}(tier.name, tier.interval)
+	}
+
+	wg.Wait()
+	log.Println("worker stopped")
+}
+
+func (w *Worker) runTier(ctx context.Context, userPlan string, interval time.Duration) {
+	log.Printf("worker[%s] started, interval=%s", userPlan, interval)
+	w.runOnce(ctx, userPlan)
+
+	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
-			log.Println("worker stopped")
+			log.Printf("worker[%s] stopped", userPlan)
 			return
 		case <-ticker.C:
-			w.runOnce(ctx)
+			w.runOnce(ctx, userPlan)
 		}
 	}
 }
 
-func (w *Worker) runOnce(ctx context.Context) {
-	watches, err := w.listings.ListWatches(ctx)
+func (w *Worker) runOnce(ctx context.Context, userPlan string) {
+	watches, err := w.listings.ListWatches(ctx, userPlan)
 	if err != nil {
-		log.Printf("worker: list watches: %v", err)
+		log.Printf("worker[%s]: list watches: %v", userPlan, err)
 		return
 	}
 	if len(watches) == 0 {
 		return
 	}
 
-	log.Printf("worker: checking %d watch(es)", len(watches))
+	log.Printf("worker[%s]: checking %d watch(es)", userPlan, len(watches))
 	for _, watch := range watches {
 		if err := w.checkWatch(ctx, watch); err != nil {
-			log.Printf("worker: watch id=%d: %v", watch.ID, err)
+			log.Printf("worker[%s]: watch id=%d: %v", userPlan, watch.ID, err)
 		}
 	}
 }

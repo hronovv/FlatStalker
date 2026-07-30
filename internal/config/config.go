@@ -20,7 +20,9 @@ type Config struct {
 }
 
 type Worker struct {
-	Interval time.Duration
+	Free time.Duration
+	Plus time.Duration
+	Pro  time.Duration
 }
 
 type App struct {
@@ -77,7 +79,9 @@ func MustLoad() *Config {
 			SupportContact: mustEnv("TELEGRAM_SUPPORT"),
 		},
 		Worker: Worker{
-			Interval: mustDuration("WORKER_INTERVAL"),
+			Free: mustDuration("WORKER_INTERVAL_FREE"),
+			Plus: mustDuration("WORKER_INTERVAL_PLUS"),
+			Pro:  mustDuration("WORKER_INTERVAL_PRO"),
 		},
 		CORS: CORS{
 			Origins: splitCSV(mustEnv("CORS_ORIGINS")),

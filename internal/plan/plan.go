@@ -1,0 +1,96 @@
+package plan
+
+import (
+	"fmt"
+	"time"
+)
+
+const (
+	Free = "free"
+	Plus = "plus"
+	Pro  = "pro"
+)
+
+// Intervals holds poll intervals for each user plan.
+type Intervals struct {
+	Free time.Duration
+	Plus time.Duration
+	Pro  time.Duration
+}
+
+func (i Intervals) For(name string) time.Duration {
+	switch name {
+	case Plus:
+		return i.Plus
+	case Pro:
+		return i.Pro
+	default:
+		return i.Free
+	}
+}
+
+func Normalize(name string) string {
+	switch name {
+	case Plus, Pro:
+		return name
+	default:
+		return Free
+	}
+}
+
+func Label(name string) string {
+	switch Normalize(name) {
+	case Plus:
+		return "PLUS"
+	case Pro:
+		return "PRO"
+	default:
+		return "FREE"
+	}
+}
+
+// FormatIntervalRU returns a short Russian phrase like "каждые 5 минут".
+func FormatIntervalRU(d time.Duration) string {
+	if d < time.Minute {
+		secs := int(d.Round(time.Second) / time.Second)
+		if secs <= 0 {
+			secs = 1
+		}
+		return fmt.Sprintf("каждые %d %s", secs, russianSeconds(secs))
+	}
+	mins := int(d.Round(time.Minute) / time.Minute)
+	if mins <= 0 {
+		mins = 1
+	}
+	return fmt.Sprintf("каждые %d %s", mins, russianMinutes(mins))
+}
+
+func russianSeconds(n int) string {
+	n = n % 100
+	if n >= 11 && n <= 14 {
+		return "секунд"
+	}
+	switch n % 10 {
+	case 1:
+		return "секунду"
+	case 2, 3, 4:
+		return "секунды"
+	default:
+		return "секунд"
+	}
+}
+
+func russianMinutes(n int) string {
+	n = n % 100
+	if n >= 11 && n <= 14 {
+		return "минут"
+	}
+	switch n % 10 {
+	case 1:
+		return "минуту"
+	case 2, 3, 4:
+		return "минуты"
+	default:
+		return "минут"
+	}
+}

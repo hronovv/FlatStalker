@@ -10,6 +10,7 @@ import (
 	appbot "flat-stalker/internal/bot"
 	"flat-stalker/internal/config"
 	"flat-stalker/internal/db"
+	"flat-stalker/internal/plan"
 	"flat-stalker/internal/repository"
 	"flat-stalker/internal/worker"
 
@@ -33,9 +34,16 @@ func main() {
 
 	listings := repository.NewListings(pool)
 	seen := repository.NewSeenAds(pool)
+	users := repository.NewUsers(pool)
+
+	intervals := plan.Intervals{
+		Free: cfg.Worker.Free,
+		Plus: cfg.Worker.Plus,
+		Pro:  cfg.Worker.Pro,
+	}
 
 	go tgBot.Start()
-	go worker.New(cfg.Worker.Interval, listings, seen, tgBot).Start(ctx)
+	go worker.New(intervals, listings, seen, tgBot).Start(ctx)
 
 	gin.SetMode(cfg.App.GinMode)
 	router := gin.Default()
@@ -43,10 +51,16 @@ func main() {
 	router.POST("/message", tgBot.Message)
 
 	links := &api.LinksHandler{
-		Users:    repository.NewUsers(pool),
+		Users:    users,
 		Listings: listings,
 	}
 	links.Register(router)
+
+	me := &api.MeHandler{
+		Users:     users,
+		Intervals: intervals,
+	}
+	me.Register(router)
 
 	log.Printf("http listening on %s", cfg.Server.Addr)
 	if err := router.Run(cfg.Server.Addr); err != nil {

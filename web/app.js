@@ -50,9 +50,18 @@ const I18N = {
     cap4_title: "По всей РБ",
     cap4_text: "Под поиск аренды в Беларуси",
     pricing_title: "Тарифы",
-    plan_free: "Старт: базовые уведомления по твоим фильтрам",
-    plan_plus: "Больше фильтров и стабильнее обновления",
-    plan_pro: "Максимальная скорость и приоритет уведомлений",
+    plan_free: "Базовая скорость проверки объявлений",
+    plan_plus: "Быстрее находит новые объявления",
+    plan_pro: "Максимальная скорость проверки",
+    plan_badge_current: "Твой",
+    plan_current_loading: "Загружаем твой тариф…",
+    plan_current: "Твой тариф: {plan}. Проверка {interval}.",
+    plan_current_guest: "Открой кабинет из Telegram, чтобы увидеть тариф.",
+    plan_current_need_start: "Сначала нажми /start в боте.",
+    plan_current_error: "Не удалось загрузить тариф.",
+    plan_interval_every: "Проверка {interval}",
+    interval_seconds: "каждые {n} сек",
+    interval_minutes: "каждые {n} мин",
     pricing_note: "Цены и оплату добавим позже.",
     faq_q: "Есть вопрос по FlatStalker?",
     faq_a: "Напиши",
@@ -121,9 +130,18 @@ const I18N = {
     cap4_title: "Па ўсёй РБ",
     cap4_text: "Пад пошук арэнды ў Беларусі",
     pricing_title: "Тарыфы",
-    plan_free: "Старт: базавыя апавяшчэнні па тваіх фільтрах",
-    plan_plus: "Больш фільтраў і стабільнейшыя абнаўленні",
-    plan_pro: "Максімальная хуткасць і прыярытэт апавяшчэнняў",
+    plan_free: "Базавая хуткасць праверкі аб'яў",
+    plan_plus: "Хутчэй знаходзіць новыя аб'явы",
+    plan_pro: "Максімальная хуткасць праверкі",
+    plan_badge_current: "Твой",
+    plan_current_loading: "Загружаем твой тарыф…",
+    plan_current: "Твой тарыф: {plan}. Праверка {interval}.",
+    plan_current_guest: "Адкрый кабінет з Telegram, каб убачыць тарыф.",
+    plan_current_need_start: "Спачатку націсні /start у боце.",
+    plan_current_error: "Не ўдалося загрузіць тарыф.",
+    plan_interval_every: "Праверка {interval}",
+    interval_seconds: "кожныя {n} сек",
+    interval_minutes: "кожныя {n} хв",
     pricing_note: "Цэны і аплату дададзім пазней.",
     faq_q: "Ёсць пытанне па FlatStalker?",
     faq_a: "Напішы",
@@ -182,6 +200,8 @@ let lang = localStorage.getItem(LANG_KEY) === "by" ? "by" : "ru";
 let toastTimer;
 let links = [];
 let linksEmptyKey = "links_empty";
+let me = null;
+let meStatusKey = "plan_current_loading";
 
 function t(key, vars) {
   const dict = I18N[lang] || I18N.ru;
@@ -192,6 +212,80 @@ function t(key, vars) {
     }
   }
   return value;
+}
+
+function formatInterval(raw) {
+  if (!raw && raw !== 0) return "";
+  const totalMs = parseGoDuration(raw);
+  if (totalMs <= 0) return String(raw);
+  if (totalMs < 60000) {
+    return t("interval_seconds", { n: Math.max(1, Math.round(totalMs / 1000)) });
+  }
+  return t("interval_minutes", { n: Math.max(1, Math.round(totalMs / 60000)) });
+}
+
+function parseGoDuration(raw) {
+  if (typeof raw === "number") return raw;
+  let totalMs = 0;
+  const re = /(\d+(?:\.\d+)?)(ns|us|µs|ms|s|m|h)/g;
+  let match;
+  while ((match = re.exec(String(raw))) !== null) {
+    const amount = Number(match[1]);
+    switch (match[2]) {
+      case "h":
+        totalMs += amount * 3_600_000;
+        break;
+      case "m":
+        totalMs += amount * 60_000;
+        break;
+      case "s":
+        totalMs += amount * 1_000;
+        break;
+      case "ms":
+        totalMs += amount;
+        break;
+      default:
+        break;
+    }
+  }
+  return totalMs;
+}
+
+function renderPlans() {
+  const currentEl = document.getElementById("plan-current");
+  const cards = document.querySelectorAll("[data-plan]");
+
+  cards.forEach((card) => {
+    const name = card.dataset.plan;
+    const isCurrent = Boolean(me && me.plan === name);
+    card.classList.toggle("is-current", isCurrent);
+    const badge = card.querySelector(".plan-badge");
+    if (badge) {
+      badge.hidden = !isCurrent;
+      badge.textContent = t("plan_badge_current");
+    }
+    const intervalEl = card.querySelector("[data-plan-interval]");
+    if (intervalEl) {
+      const raw = me?.intervals?.[name];
+      intervalEl.textContent = raw
+        ? t("plan_interval_every", { interval: formatInterval(raw) })
+        : "";
+    }
+  });
+
+  if (!currentEl) return;
+  if (!chatID()) {
+    currentEl.textContent = t("plan_current_guest");
+    return;
+  }
+  if (!me) {
+    currentEl.textContent = t(meStatusKey);
+    return;
+  }
+  currentEl.textContent = t("plan_current", {
+    plan: me.plan_label || String(me.plan || "").toUpperCase(),
+    interval: formatInterval(me.interval),
+  });
 }
 
 function applyLanguage() {
@@ -226,6 +320,7 @@ function applyLanguage() {
   }
 
   renderLinks();
+  renderPlans();
 }
 
 function setLanguage(next) {
@@ -327,6 +422,42 @@ function escapeHTML(value) {
 
 function escapeAttr(value) {
   return escapeHTML(value).replaceAll("'", "&#39;");
+}
+
+async function loadMe() {
+  const chatId = chatID();
+  const currentEl = document.getElementById("plan-current");
+  if (!chatId) {
+    me = null;
+    meStatusKey = "plan_current_guest";
+    renderPlans();
+    return;
+  }
+
+  meStatusKey = "plan_current_loading";
+  if (currentEl) currentEl.textContent = t(meStatusKey);
+
+  try {
+    const res = await fetch(`${API_BASE}/api/me?chat_id=${encodeURIComponent(chatId)}`);
+    const body = await res.json().catch(() => ({}));
+    if (res.status === 404) {
+      me = null;
+      meStatusKey = "plan_current_need_start";
+      renderPlans();
+      return;
+    }
+    if (!res.ok) {
+      throw new Error(body.error || `HTTP ${res.status}`);
+    }
+    me = body;
+    meStatusKey = "plan_current_loading";
+    renderPlans();
+  } catch (err) {
+    console.error(err);
+    me = null;
+    meStatusKey = "plan_current_error";
+    renderPlans();
+  }
 }
 
 async function loadLinks() {
@@ -506,4 +637,5 @@ linkForm?.addEventListener("submit", async (event) => {
 });
 
 applyLanguage();
+loadMe();
 loadLinks();

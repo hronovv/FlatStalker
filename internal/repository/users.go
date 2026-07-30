@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"flat-stalker/internal/models"
+	"flat-stalker/internal/plan"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -20,15 +21,16 @@ func NewUsers(pool *pgxpool.Pool) *Users {
 }
 
 func (r *Users) GetByChatID(ctx context.Context, chatID int64) (*models.User, error) {
-	const q = `SELECT id, chat_id FROM users WHERE chat_id = $1`
+	const q = `SELECT id, chat_id, plan FROM users WHERE chat_id = $1`
 	user := &models.User{}
-	err := r.pool.QueryRow(ctx, q, chatID).Scan(&user.ID, &user.ChatID)
+	err := r.pool.QueryRow(ctx, q, chatID).Scan(&user.ID, &user.ChatID, &user.Plan)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {
 		return nil, fmt.Errorf("get user: %w", err)
 	}
+	user.Plan = plan.Normalize(user.Plan)
 	return user, nil
 }
 
@@ -38,12 +40,13 @@ func (r *Users) CreateByChatID(ctx context.Context, chatID int64) (*models.User,
 INSERT INTO users (chat_id)
 VALUES ($1)
 ON CONFLICT (chat_id) DO UPDATE SET chat_id = EXCLUDED.chat_id
-RETURNING id, chat_id;
+RETURNING id, chat_id, plan;
 `
 	user := &models.User{}
-	err := r.pool.QueryRow(ctx, q, chatID).Scan(&user.ID, &user.ChatID)
+	err := r.pool.QueryRow(ctx, q, chatID).Scan(&user.ID, &user.ChatID, &user.Plan)
 	if err != nil {
 		return nil, fmt.Errorf("create user: %w", err)
 	}
+	user.Plan = plan.Normalize(user.Plan)
 	return user, nil
 }

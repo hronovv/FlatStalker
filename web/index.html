@@ -23,7 +23,7 @@
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=14" />
+    <link rel="stylesheet" href="styles.css?v=15" />
   </head>
   <body>
     <main class="page">
@@ -236,18 +236,31 @@
           </svg>
         </summary>
         <div class="acc-body">
+          <p class="hint" id="plan-current" data-i18n="plan_current_loading">Загружаем твой тариф…</p>
           <div class="plans">
-            <article class="plan">
-              <p class="plan-name">FREE</p>
-              <p class="plan-desc" data-i18n="plan_free">Старт: базовые уведомления по твоим фильтрам</p>
+            <article class="plan" data-plan="free">
+              <div class="plan-head">
+                <p class="plan-name">FREE</p>
+                <span class="plan-badge" data-i18n="plan_badge_current" hidden>Твой</span>
+              </div>
+              <p class="plan-interval" data-plan-interval="free"></p>
+              <p class="plan-desc" data-i18n="plan_free">Проверка объявлений каждые 5 минут</p>
             </article>
-            <article class="plan plan-plus">
-              <p class="plan-name">PLUS</p>
-              <p class="plan-desc" data-i18n="plan_plus">Больше фильтров и стабильнее обновления</p>
+            <article class="plan plan-plus" data-plan="plus">
+              <div class="plan-head">
+                <p class="plan-name">PLUS</p>
+                <span class="plan-badge" data-i18n="plan_badge_current" hidden>Твой</span>
+              </div>
+              <p class="plan-interval" data-plan-interval="plus"></p>
+              <p class="plan-desc" data-i18n="plan_plus">Проверка объявлений каждые 2 минуты</p>
             </article>
-            <article class="plan plan-pro">
-              <p class="plan-name">PRO</p>
-              <p class="plan-desc" data-i18n="plan_pro">Максимальная скорость и приоритет уведомлений</p>
+            <article class="plan plan-pro" data-plan="pro">
+              <div class="plan-head">
+                <p class="plan-name">PRO</p>
+                <span class="plan-badge" data-i18n="plan_badge_current" hidden>Твой</span>
+              </div>
+              <p class="plan-interval" data-plan-interval="pro"></p>
+              <p class="plan-desc" data-i18n="plan_pro">Проверка объявлений каждые 30 секунд</p>
             </article>
           </div>
           <p class="acc-note" data-i18n="pricing_note">Цены и оплату добавим позже.</p>
@@ -280,6 +293,6 @@
 
     <div class="toast" id="toast" hidden></div>
 
-    <script src="app.js?v=14"></script>
+    <script src="app.js?v=15"></script>
   </body>
 </html>

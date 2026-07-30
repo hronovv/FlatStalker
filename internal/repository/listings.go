@@ -126,15 +126,16 @@ WHERE l.id = $1
 	return tag.RowsAffected() > 0, nil
 }
 
-func (r *Listings) ListWatches(ctx context.Context) ([]Watch, error) {
+func (r *Listings) ListWatches(ctx context.Context, userPlan string) ([]Watch, error) {
 	const q = `
 SELECT l.id, l.user_id, u.chat_id, l.url, l.paused
 FROM listings l
 JOIN users u ON u.id = l.user_id
 WHERE l.paused = false
+  AND u.plan = $1
 ORDER BY l.id;
 `
-	rows, err := r.pool.Query(ctx, q)
+	rows, err := r.pool.Query(ctx, q, userPlan)
 	if err != nil {
 		return nil, fmt.Errorf("list watches: %w", err)
 	}
