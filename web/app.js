@@ -70,9 +70,12 @@ const I18N = {
     badge_paused: "Пауза",
     action_pause: "Пауза",
     action_resume: "Возобновить",
+    action_copy: "Копировать",
     action_delete: "Удалить",
     toast_paused: "На паузе",
     toast_resumed: "Снова активна",
+    toast_copied: "Ссылка скопирована",
+    toast_copy_fail: "Не удалось скопировать",
     toast_deleted: "Ссылка удалена",
     toast_update_fail: "Не удалось обновить",
     toast_open_tg: "Открой Mini App из Telegram",
@@ -150,9 +153,12 @@ const I18N = {
     badge_paused: "Паўза",
     action_pause: "Паўза",
     action_resume: "Аднавіць",
+    action_copy: "Капіяваць",
     action_delete: "Выдаліць",
     toast_paused: "На паўзе",
     toast_resumed: "Зноў актыўная",
+    toast_copied: "Спасылка скапіявана",
+    toast_copy_fail: "Не ўдалося скапіяваць",
     toast_deleted: "Спасылка выдалена",
     toast_update_fail: "Не ўдалося абнавіць",
     toast_open_tg: "Адкрый Mini App з Telegram",
@@ -398,6 +404,9 @@ function renderLinks() {
           <div class="link-item-meta">
             <span class="link-badge">${paused ? t("badge_paused") : t("badge_active")}</span>
             <div class="link-actions">
+              <button type="button" class="link-action" data-action="copy" data-id="${link.id}">
+                ${t("action_copy")}
+              </button>
               <button type="button" class="link-action" data-action="toggle" data-id="${link.id}">
                 ${paused ? t("action_resume") : t("action_pause")}
               </button>
@@ -528,6 +537,23 @@ async function deleteLink(id) {
   return body;
 }
 
+async function copyText(text) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  const area = document.createElement("textarea");
+  area.value = text;
+  area.setAttribute("readonly", "");
+  area.style.position = "fixed";
+  area.style.opacity = "0";
+  document.body.appendChild(area);
+  area.select();
+  const ok = document.execCommand("copy");
+  area.remove();
+  if (!ok) throw new Error("copy failed");
+}
+
 linkList?.addEventListener("click", async (event) => {
   const button = event.target.closest("[data-action]");
   if (!button) return;
@@ -541,6 +567,15 @@ linkList?.addEventListener("click", async (event) => {
 
   button.disabled = true;
   try {
+    if (action === "copy") {
+      await copyText(link.url);
+      if (tg?.HapticFeedback?.notificationOccurred) {
+        tg.HapticFeedback.notificationOccurred("success");
+      }
+      showToast(t("toast_copied"));
+      return;
+    }
+
     if (action === "toggle") {
       const nextPaused = !link.paused;
       await setPaused(id, nextPaused);
@@ -566,7 +601,7 @@ linkList?.addEventListener("click", async (event) => {
     }
   } catch (err) {
     console.error(err);
-    showToast(t("toast_update_fail"));
+    showToast(action === "copy" ? t("toast_copy_fail") : t("toast_update_fail"));
   } finally {
     button.disabled = false;
   }
