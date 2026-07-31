@@ -452,11 +452,8 @@ a:hover {
 }
 
 .link-item-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  display: grid;
+  gap: 10px;
 }
 
 .link-badge {
@@ -482,19 +479,22 @@ a:hover {
 }
 
 .link-actions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
+  width: 100%;
 }
 
 .link-action {
   min-height: 36px;
-  padding: 0 12px;
+  padding: 0 8px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: transparent;
   color: var(--text);
-  font: 600 0.78rem var(--font);
+  font: 600 0.75rem var(--font);
+  text-align: center;
+  white-space: nowrap;
   cursor: pointer;
   transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
 }
