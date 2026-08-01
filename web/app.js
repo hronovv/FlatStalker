@@ -71,10 +71,14 @@ const I18N = {
     action_pause: "Пауза",
     action_resume: "Возобновить",
     action_copy: "Копировать",
+    action_paste: "Вставить из буфера",
     action_delete: "Удалить",
     toast_paused: "На паузе",
     toast_resumed: "Снова активна",
     toast_copied: "Ссылка скопирована",
+    toast_pasted: "Вставлено из буфера",
+    toast_paste_empty: "В буфере нет ссылки",
+    toast_paste_fail: "Не удалось прочитать буфер",
     toast_copy_fail: "Не удалось скопировать",
     toast_deleted: "Ссылка удалена",
     toast_update_fail: "Не удалось обновить",
@@ -154,10 +158,14 @@ const I18N = {
     action_pause: "Паўза",
     action_resume: "Аднавіць",
     action_copy: "Капіяваць",
+    action_paste: "Уставіць з буфера",
     action_delete: "Выдаліць",
     toast_paused: "На паўзе",
     toast_resumed: "Зноў актыўная",
     toast_copied: "Спасылка скапіявана",
+    toast_pasted: "Устаўлена з буфера",
+    toast_paste_empty: "У буферы няма спасылкі",
+    toast_paste_fail: "Не ўдалося прачытаць буфер",
     toast_copy_fail: "Не ўдалося скапіяваць",
     toast_deleted: "Спасылка выдалена",
     toast_update_fail: "Не ўдалося абнавіць",
@@ -194,6 +202,8 @@ const hello = document.getElementById("hello");
 const linkForm = document.getElementById("link-form");
 const linkNote = document.getElementById("link-note");
 const linkSubmit = document.getElementById("link-submit");
+const linkUrl = document.getElementById("link-url");
+const pasteLink = document.getElementById("paste-link");
 const toast = document.getElementById("toast");
 const roomsInput = document.getElementById("rooms-input");
 const roomButtons = document.querySelectorAll(".seg-btn");
@@ -554,6 +564,50 @@ async function copyText(text) {
   if (!ok) throw new Error("copy failed");
 }
 
+async function readClipboardText() {
+  if (navigator.clipboard?.readText) {
+    return String(await navigator.clipboard.readText()).trim();
+  }
+  throw new Error("clipboard read unsupported");
+}
+
+function syncPasteGlow() {
+  if (!pasteLink || !linkUrl) return;
+  const empty = !String(linkUrl.value || "").trim();
+  pasteLink.classList.toggle("is-glow", empty);
+  pasteLink.classList.toggle("is-done", !empty);
+}
+
+pasteLink?.addEventListener("click", async () => {
+  pasteLink.disabled = true;
+  try {
+    const text = await readClipboardText();
+    if (!text) {
+      showToast(t("toast_paste_empty"));
+      return;
+    }
+    if (linkUrl) {
+      linkUrl.value = text;
+      linkUrl.focus();
+      linkUrl.setSelectionRange(text.length, text.length);
+    }
+    syncPasteGlow();
+    if (tg?.HapticFeedback?.notificationOccurred) {
+      tg.HapticFeedback.notificationOccurred("success");
+    }
+    showToast(t("toast_pasted"));
+  } catch (err) {
+    console.error(err);
+    showToast(t("toast_paste_fail"));
+  } finally {
+    pasteLink.disabled = false;
+  }
+});
+
+linkUrl?.addEventListener("input", syncPasteGlow);
+linkUrl?.addEventListener("change", syncPasteGlow);
+syncPasteGlow();
+
 linkList?.addEventListener("click", async (event) => {
   const button = event.target.closest("[data-action]");
   if (!button) return;
@@ -658,6 +712,7 @@ linkForm?.addEventListener("submit", async (event) => {
       showToast(t("toast_added"));
       if (linkNote) linkNote.textContent = t("note_added");
       linkForm.reset();
+      syncPasteGlow();
       await loadLinks();
     }
     linkNote?.classList.add("is-flash");

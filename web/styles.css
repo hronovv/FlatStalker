@@ -320,6 +320,58 @@ a:hover {
   line-height: 1;
 }
 
+.field-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.paste-btn {
+  position: relative;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid rgba(65, 217, 196, 0.45);
+  border-radius: 999px;
+  background: rgba(65, 217, 196, 0.12);
+  color: var(--accent);
+  font: 700 0.7rem/1 var(--mono);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.paste-btn:hover {
+  background: rgba(65, 217, 196, 0.2);
+  border-color: var(--accent);
+}
+
+.paste-btn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.paste-btn.is-glow {
+  animation: paste-glow 1.8s ease-in-out infinite;
+}
+
+.paste-btn.is-done {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+  animation: none;
+}
+
+@keyframes paste-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(65, 217, 196, 0.0);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(65, 217, 196, 0.16);
+  }
+}
+
 .field input {
   width: 100%;
   min-height: 48px;
@@ -742,6 +794,7 @@ a:hover {
   .reveal,
   .status-pulse,
   .btn-shine,
+  .paste-btn.is-glow,
   .acc-body {
     animation: none !important;
   }

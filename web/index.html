@@ -23,7 +23,7 @@
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=17" />
+    <link rel="stylesheet" href="styles.css?v=18" />
   </head>
   <body>
     <main class="page">
@@ -128,8 +128,18 @@
         </form>
 
         <form class="form link-form" id="link-form" autocomplete="off">
-          <label class="field">
-            <span class="label" data-i18n="link_label">Ссылка</span>
+          <div class="field">
+            <div class="field-head">
+              <span class="label" data-i18n="link_label">Ссылка</span>
+              <button
+                type="button"
+                class="paste-btn is-glow"
+                id="paste-link"
+                data-i18n="action_paste"
+              >
+                Вставить из буфера
+              </button>
+            </div>
             <input
               type="url"
               name="url"
@@ -137,7 +147,7 @@
               placeholder="https://re.kufar.by/l/…/snyat/kvartiru…"
               required
             />
-          </label>
+          </div>
 
           <button class="btn" type="submit" id="link-submit">
             <span data-i18n="link_submit">Добавить ссылку</span>
@@ -293,6 +303,6 @@
 
     <div class="toast" id="toast" hidden></div>
 
-    <script src="app.js?v=17"></script>
+    <script src="app.js?v=18"></script>
   </body>
 </html>
