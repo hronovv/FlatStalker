@@ -50,9 +50,9 @@ const I18N = {
     cap4_title: "По всей РБ",
     cap4_text: "Под поиск аренды в Беларуси",
     pricing_title: "Тарифы",
-    plan_free: "Базовая скорость проверки объявлений",
-    plan_plus: "Быстрее находит новые объявления",
-    plan_pro: "Максимальная скорость проверки",
+    plan_free: "Проверка объявлений каждые 5 минут",
+    plan_plus: "Проверка объявлений каждые 2 минуты",
+    plan_pro: "Проверка объявлений каждые 30 секунд",
     plan_badge_current: "Твой",
     plan_current_loading: "Загружаем твой тариф…",
     plan_current: "Твой тариф: {plan}. Проверка {interval}.",
@@ -137,9 +137,9 @@ const I18N = {
     cap4_title: "Па ўсёй РБ",
     cap4_text: "Пад пошук арэнды ў Беларусі",
     pricing_title: "Тарыфы",
-    plan_free: "Базавая хуткасць праверкі аб'яў",
-    plan_plus: "Хутчэй знаходзіць новыя аб'явы",
-    plan_pro: "Максімальная хуткасць праверкі",
+    plan_free: "Праверка аб'яў кожныя 5 хвілін",
+    plan_plus: "Праверка аб'яў кожныя 2 хвіліны",
+    plan_pro: "Праверка аб'яў кожныя 30 секунд",
     plan_badge_current: "Твой",
     plan_current_loading: "Загружаем твой тарыф…",
     plan_current: "Твой тарыф: {plan}. Праверка {interval}.",
@@ -267,6 +267,12 @@ function parseGoDuration(raw) {
   return totalMs;
 }
 
+const DEFAULT_PLAN_INTERVALS = {
+  free: "5m",
+  plus: "2m",
+  pro: "30s",
+};
+
 function renderPlans() {
   const currentEl = document.getElementById("plan-current");
   const cards = document.querySelectorAll("[data-plan]");
@@ -282,7 +288,7 @@ function renderPlans() {
     }
     const intervalEl = card.querySelector("[data-plan-interval]");
     if (intervalEl) {
-      const raw = me?.intervals?.[name];
+      const raw = me?.intervals?.[name] || DEFAULT_PLAN_INTERVALS[name];
       intervalEl.textContent = raw
         ? t("plan_interval_every", { interval: formatInterval(raw) })
         : "";
