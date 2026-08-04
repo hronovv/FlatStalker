@@ -42,6 +42,7 @@ func (b *Bot) registerHandlers() {
 	b.api.RegisterHandler(bot.HandlerTypeMessageText, "links", bot.MatchTypeCommand, b.linksHandler)
 	b.api.RegisterHandler(bot.HandlerTypeMessageText, "status", bot.MatchTypeCommand, b.statusHandler)
 	b.api.RegisterHandler(bot.HandlerTypeMessageText, "help", bot.MatchTypeCommand, b.helpHandler)
+	b.api.RegisterHandler(bot.HandlerTypeCallbackQueryData, linksCallbackPrefix, bot.MatchTypePrefix, b.linksCallbackHandler)
 }
 
 func (b *Bot) Start() {
