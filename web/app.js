@@ -93,6 +93,11 @@ const I18N = {
     note_limit: "Удали ссылку или смени тариф, чтобы добавить новую.",
     note_api_error: "Ошибка. Проверь, что backend запущен и api= доступен.",
     confirm_delete: "Удалить эту ссылку?",
+    ban_stamp: "ДОСТУП ЗАКРЫТ",
+    ban_title: "Кабинет на паузе",
+    ban_text:
+      "Сейчас этот аккаунт не может пользоваться FlatStalker. Если так вышло по ошибке — напиши, спокойно разберёмся.",
+    ban_contact: "Связаться",
   },
   by: {
     hello_guest: "Прывітанне — гэта твой кабінет",
@@ -178,6 +183,11 @@ const I18N = {
     note_limit: "Выдалі спасылку або змяні тарыф, каб дадаць новую.",
     note_api_error: "Памылка. Правер, што backend запушчаны і api= даступны.",
     confirm_delete: "Выдаліць гэтую спасылку?",
+    ban_stamp: "ДОСТУП ЗАЧЫНЕНЫ",
+    ban_title: "Кабінет на паўзе",
+    ban_text:
+      "Зараз гэты акаўнт не можа карыстацца FlatStalker. Калі так выйшла памылкова — напішы, спакойна разбярэмся.",
+    ban_contact: "Звязацца",
   },
 };
 
@@ -429,7 +439,35 @@ async function apiFetch(path, options = {}) {
   if (options.body && !headers["Content-Type"]) {
     headers["Content-Type"] = "application/json";
   }
-  return fetch(`${API_BASE}${path}`, { ...options, headers });
+  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  if (res.status === 403) {
+    const body = await res.clone().json().catch(() => ({}));
+    if (body.code === "banned") {
+      showBanScreen(body.support);
+    }
+  }
+  return res;
+}
+
+function supportHandle(raw) {
+  const handle = String(raw || "@bazan_ivan").trim();
+  return handle.startsWith("@") ? handle : `@${handle}`;
+}
+
+function showBanScreen(support) {
+  const screen = document.getElementById("ban-screen");
+  const contact = document.getElementById("ban-contact");
+  const handleEl = document.getElementById("ban-handle");
+  const handle = supportHandle(support);
+  document.body.classList.add("is-banned");
+  clearCabinetCache();
+  if (handleEl) handleEl.textContent = handle;
+  if (contact) contact.href = `https://t.me/${handle.replace(/^@/, "")}`;
+  screen?.querySelectorAll("[data-i18n]").forEach((el) => {
+    const key = el.dataset.i18n;
+    if (key) el.textContent = t(key);
+  });
+  if (screen) screen.hidden = false;
 }
 
 function shortURL(url) {

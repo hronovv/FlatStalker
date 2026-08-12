@@ -33,8 +33,9 @@ func main() {
 	listings := repository.NewListings(pool)
 	seen := repository.NewSeenAds(pool)
 	users := repository.NewUsers(pool)
+	bans := repository.NewBans(pool)
 
-	tgBot, err := appbot.New(ctx, cfg, users, listings)
+	tgBot, err := appbot.New(ctx, cfg, users, listings, bans)
 	if err != nil {
 		panic(err)
 	}
@@ -55,7 +56,7 @@ func main() {
 	router.Use(api.CORS(cfg.CORS.Origins))
 
 	apiGroup := router.Group("/api")
-	apiGroup.Use(api.TelegramAuth(cfg.Telegram.BotToken, 24*time.Hour))
+	apiGroup.Use(api.TelegramAuth(cfg.Telegram.BotToken, 24*time.Hour, bans, cfg.Telegram.SupportContact))
 
 	links := &api.LinksHandler{
 		Users:    users,

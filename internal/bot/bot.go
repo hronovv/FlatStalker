@@ -16,9 +16,10 @@ type Bot struct {
 	config   *config.Config
 	users    *repository.Users
 	listings *repository.Listings
+	bans     *repository.Bans
 }
 
-func New(ctx context.Context, cfg *config.Config, users *repository.Users, listings *repository.Listings) (*Bot, error) {
+func New(ctx context.Context, cfg *config.Config, users *repository.Users, listings *repository.Listings, bans *repository.Bans) (*Bot, error) {
 	api, err := bot.New(cfg.Telegram.BotToken, bot.WithDefaultHandler(func(context.Context, *bot.Bot, *models.Update) {}))
 	if err != nil {
 		return nil, err
@@ -30,6 +31,7 @@ func New(ctx context.Context, cfg *config.Config, users *repository.Users, listi
 		config:   cfg,
 		users:    users,
 		listings: listings,
+		bans:     bans,
 	}
 	b.registerHandlers()
 	return b, nil

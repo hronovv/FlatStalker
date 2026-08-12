@@ -24,7 +24,14 @@ func (b *Bot) startHandler(ctx context.Context, _ *bot.Bot, update *models.Updat
 	}
 
 	chatID := update.Message.Chat.ID
+	if b.rejectIfBanned(ctx, chatID) {
+		return
+	}
 	if _, err := b.users.CreateByChatID(ctx, chatID); err != nil {
+		if errors.Is(err, repository.ErrBanned) {
+			b.sendBanNotice(ctx, chatID)
+			return
+		}
 		log.Printf("start: create user chat_id=%d: %v", chatID, err)
 	}
 
@@ -43,6 +50,9 @@ func (b *Bot) linksHandler(ctx context.Context, _ *bot.Bot, update *models.Updat
 	}
 
 	chatID := update.Message.Chat.ID
+	if b.rejectIfBanned(ctx, chatID) {
+		return
+	}
 	listings, err := b.listings.ListByChatID(ctx, chatID)
 	if err != nil {
 		log.Printf("links: chat_id=%d: %v", chatID, err)
@@ -92,6 +102,16 @@ func (b *Bot) linksCallbackHandler(ctx context.Context, _ *bot.Bot, update *mode
 
 	cq := update.CallbackQuery
 	chatID := cq.From.ID
+	if banned, err := b.bans.IsBanned(ctx, chatID); err != nil {
+		log.Printf("ban check chat_id=%d: %v", chatID, err)
+	} else if banned {
+		_, _ = b.api.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{
+			CallbackQueryID: cq.ID,
+			Text:            "Доступ закрыт",
+			ShowAlert:       true,
+		})
+		return
+	}
 	action, listingID, ok := parseLinksCallback(cq.Data)
 	if !ok {
 		_, _ = b.api.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{
@@ -266,6 +286,9 @@ func (b *Bot) statusHandler(ctx context.Context, _ *bot.Bot, update *models.Upda
 	}
 
 	chatID := update.Message.Chat.ID
+	if b.rejectIfBanned(ctx, chatID) {
+		return
+	}
 	user, err := b.users.GetByChatID(ctx, chatID)
 	if err != nil {
 		log.Printf("status: chat_id=%d: %v", chatID, err)
@@ -310,6 +333,9 @@ func (b *Bot) helpHandler(ctx context.Context, _ *bot.Bot, update *models.Update
 	if update.Message == nil {
 		return
 	}
+	if b.rejectIfBanned(ctx, update.Message.Chat.ID) {
+		return
+	}
 
 	_, err := b.api.SendMessage(b.ctx, &bot.SendMessageParams{
 		ChatID:    update.Message.Chat.ID,
@@ -319,6 +345,29 @@ func (b *Bot) helpHandler(ctx context.Context, _ *bot.Bot, update *models.Update
 	if err != nil {
 		log.Println(err)
 	}
+}
+
+func (b *Bot) rejectIfBanned(ctx context.Context, chatID int64) bool {
+	banned, err := b.bans.IsBanned(ctx, chatID)
+	if err != nil {
+		log.Printf("ban check chat_id=%d: %v", chatID, err)
+		return false
+	}
+	if !banned {
+		return false
+	}
+	b.sendBanNotice(ctx, chatID)
+	return true
+}
+
+func (b *Bot) sendBanNotice(ctx context.Context, chatID int64) {
+	_, _ = b.api.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: chatID,
+		Text: fmt.Sprintf(
+			"Доступ к FlatStalker сейчас закрыт.\nЕсли это ошибка — напиши %s, разберёмся.",
+			b.config.Telegram.SupportContact,
+		),
+	})
 }
 
 func botBool(v bool) *bool {

@@ -719,6 +719,99 @@ a:hover {
   transform: translateX(-50%) translateY(0);
 }
 
+body.is-banned .page,
+body.is-banned .toast {
+  display: none;
+}
+
+.ban-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding:
+    calc(28px + env(safe-area-inset-top, 0px))
+    18px
+    calc(28px + env(safe-area-inset-bottom, 0px));
+  background:
+    repeating-linear-gradient(
+      -18deg,
+      rgba(255, 230, 0, 0.07) 0 12px,
+      transparent 12px 24px
+    ),
+    radial-gradient(700px 420px at 50% -10%, rgba(255, 230, 0, 0.12), transparent 62%),
+    var(--bg);
+}
+
+.ban-screen[hidden] {
+  display: none;
+}
+
+.ban-card {
+  position: relative;
+  width: min(420px, 100%);
+  overflow: hidden;
+  padding: 28px 22px 24px;
+  border: 1px solid rgba(255, 230, 0, 0.28);
+  border-radius: 18px;
+  background: rgba(13, 27, 43, 0.94);
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.35);
+}
+
+.ban-tape {
+  position: absolute;
+  top: 18px;
+  left: -18px;
+  margin: 0;
+  padding: 6px 42px;
+  transform: rotate(-8deg);
+  background: #ffe600;
+  color: #111;
+  font: 800 0.68rem/1 var(--mono);
+  letter-spacing: 0.14em;
+}
+
+.ban-stamp {
+  margin: 42px 0 14px;
+  color: #ffe600;
+  font: 800 0.78rem/1 var(--mono);
+  letter-spacing: 0.16em;
+}
+
+.ban-title {
+  margin: 0;
+  font-size: clamp(1.7rem, 8vw, 2.3rem);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.ban-text {
+  margin: 12px 0 22px;
+  color: var(--muted);
+  font-size: 0.96rem;
+  line-height: 1.55;
+}
+
+.ban-contact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 50px;
+  padding: 0 16px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font: 700 0.92rem var(--mono);
+  text-decoration: none;
+}
+
+.ban-contact:hover {
+  text-decoration: none;
+  filter: brightness(1.06);
+}
+
 @keyframes rise {
   to {
     opacity: 1;

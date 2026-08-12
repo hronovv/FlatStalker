@@ -23,7 +23,7 @@
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=29" />
+    <link rel="stylesheet" href="styles.css?v=30" />
   </head>
   <body>
     <main class="page">
@@ -266,6 +266,22 @@
 
     <div class="toast" id="toast" hidden></div>
 
-    <script src="app.js?v=29"></script>
+    <section class="ban-screen" id="ban-screen" hidden>
+      <div class="ban-card">
+        <p class="ban-tape" aria-hidden="true">CLOSED · CLOSED · CLOSED</p>
+        <p class="ban-stamp" data-i18n="ban_stamp">ДОСТУП ЗАКРЫТ</p>
+        <h1 class="ban-title" data-i18n="ban_title">Кабинет на паузе</h1>
+        <p class="ban-text" data-i18n="ban_text">
+          Сейчас этот аккаунт не может пользоваться FlatStalker. Если так вышло
+          по ошибке — напиши, спокойно разберёмся.
+        </p>
+        <a class="ban-contact" id="ban-contact" href="https://t.me/bazan_ivan" rel="noopener">
+          <span data-i18n="ban_contact">Связаться</span>
+          <span id="ban-handle">@bazan_ivan</span>
+        </a>
+      </div>
+    </section>
+
+    <script src="app.js?v=30"></script>
   </body>
 </html>

@@ -13,6 +13,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+var ErrBanned = errors.New("user is banned")
+
 type Users struct {
 	pool   *pgxpool.Pool
 	byChat *cache.LRU[models.User]
@@ -47,6 +49,14 @@ func (r *Users) GetByChatID(ctx context.Context, chatID int64) (*models.User, er
 
 // CreateByChatID inserts a user or returns the existing one (chat_id is unique).
 func (r *Users) CreateByChatID(ctx context.Context, chatID int64) (*models.User, error) {
+	var banned bool
+	if err := r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM banned_users WHERE chat_id = $1)`, chatID).Scan(&banned); err != nil {
+		return nil, fmt.Errorf("check ban: %w", err)
+	}
+	if banned {
+		return nil, ErrBanned
+	}
+
 	const q = `
 INSERT INTO users (chat_id)
 VALUES ($1)
