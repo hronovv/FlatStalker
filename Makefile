@@ -8,4 +8,4 @@ web:
 	@python3 -m http.server 5173 --directory web >/dev/null 2>&1
 
 # Прод/стабильный URL после push в main:
-# https://hronovv.github.io/FlatScout/
+# https://hronovv.github.io/FlatStalker/

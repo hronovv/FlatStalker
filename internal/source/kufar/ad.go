@@ -20,7 +20,6 @@ type Ad struct {
 	Metro     []string
 	BodyShort string
 	ListTime  string
-	ImageURL  string
 }
 
 type apiParam struct {
@@ -36,14 +35,8 @@ type apiAd struct {
 	PriceBYN          json.RawMessage `json:"price_byn"`
 	BodyShort         string          `json:"body_short"`
 	ListTime          string          `json:"list_time"`
-	Images            []apiImage      `json:"images"`
 	AdParameters      []apiParam      `json:"ad_parameters"`
 	AccountParameters []apiParam      `json:"account_parameters"`
-}
-
-type apiImage struct {
-	Path string `json:"path"`
-	URL  string `json:"url"`
 }
 
 func AdFromAPI(raw json.RawMessage) (Ad, error) {
@@ -79,14 +72,6 @@ func AdFromAPI(raw json.RawMessage) (Ad, error) {
 		subject = "Без названия"
 	}
 
-	imageURL := ""
-	if len(ad.Images) > 0 {
-		imageURL = ad.Images[0].Path
-		if imageURL == "" {
-			imageURL = ad.Images[0].URL
-		}
-	}
-
 	return Ad{
 		AdID:      ad.AdID,
 		URL:       listingURL,
@@ -98,7 +83,6 @@ func AdFromAPI(raw json.RawMessage) (Ad, error) {
 		Metro:     metro,
 		BodyShort: ad.BodyShort,
 		ListTime:  ad.ListTime,
-		ImageURL:  imageURL,
 	}, nil
 }
 

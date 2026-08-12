@@ -64,7 +64,6 @@ a:hover {
 
 .top.reveal { animation-delay: 30ms; }
 .hero.reveal { animation-delay: 80ms; }
-.filters.reveal { animation-delay: 130ms; }
 .add-link.reveal { animation-delay: 130ms; }
 .my-links.reveal { animation-delay: 160ms; }
 .acc.reveal:nth-of-type(1) { animation-delay: 200ms; }
@@ -278,8 +277,7 @@ a:hover {
 .form-note,
 .acc-note,
 .faq-a,
-.feats span,
-.plan-desc {
+.feats span {
   margin: 0;
   color: var(--muted);
   font-size: 0.94rem;
@@ -298,12 +296,6 @@ a:hover {
 .link-form {
   display: grid;
   gap: 14px;
-}
-
-.row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
 }
 
 .field {
@@ -392,41 +384,6 @@ a:hover {
 .field input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(65, 217, 196, 0.11);
-}
-
-.seg {
-  display: grid;
-  grid-template-columns: 1.35fr repeat(4, 1fr);
-  width: 100%;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--surface-2);
-}
-
-.seg-btn {
-  min-height: 44px;
-  margin: 0;
-  border: 0;
-  border-right: 1px solid var(--line);
-  background: transparent;
-  color: var(--text);
-  font: 600 0.8rem var(--mono);
-  cursor: pointer;
-  transition: color 160ms ease, background 160ms ease;
-}
-
-.seg-btn:last-child {
-  border-right: 0;
-}
-
-.seg-btn:hover {
-  background: rgba(65, 217, 196, 0.07);
-}
-
-.seg-btn.is-active {
-  background: var(--accent);
-  color: var(--accent-ink);
 }
 
 .btn {

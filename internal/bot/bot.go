@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Bot struct {
@@ -19,7 +18,7 @@ type Bot struct {
 	listings *repository.Listings
 }
 
-func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool) (*Bot, error) {
+func New(ctx context.Context, cfg *config.Config, users *repository.Users, listings *repository.Listings) (*Bot, error) {
 	api, err := bot.New(cfg.Telegram.BotToken, bot.WithDefaultHandler(func(context.Context, *bot.Bot, *models.Update) {}))
 	if err != nil {
 		return nil, err
@@ -29,8 +28,8 @@ func New(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool) (*Bot, err
 		ctx:      ctx,
 		api:      api,
 		config:   cfg,
-		users:    repository.NewUsers(pool),
-		listings: repository.NewListings(pool),
+		users:    users,
+		listings: listings,
 	}
 	b.registerHandlers()
 	return b, nil

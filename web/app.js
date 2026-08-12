@@ -178,7 +178,6 @@ if (tg) {
 }
 
 const user = tg?.initDataUnsafe?.user;
-const hello = document.getElementById("hello");
 const linkForm = document.getElementById("link-form");
 const linkNote = document.getElementById("link-note");
 const linkSubmit = document.getElementById("link-submit");
@@ -303,16 +302,6 @@ function applyLanguage() {
       return;
     }
     el.textContent = t(key);
-  });
-
-  document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
-    const key = el.dataset.i18nPlaceholder;
-    if (key) el.setAttribute("placeholder", t(key));
-  });
-
-  document.querySelectorAll("[data-i18n-aria]").forEach((el) => {
-    const key = el.dataset.i18nAria;
-    if (key) el.setAttribute("aria-label", t(key));
   });
 
   if (linksEmpty && !links.length) {

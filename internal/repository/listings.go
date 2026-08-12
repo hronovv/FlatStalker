@@ -76,18 +76,6 @@ ORDER BY l.id;
 	return out, nil
 }
 
-func (r *Listings) ListURLsByChatID(ctx context.Context, chatID int64) ([]string, error) {
-	listings, err := r.ListByChatID(ctx, chatID)
-	if err != nil {
-		return nil, err
-	}
-	urls := make([]string, len(listings))
-	for i, l := range listings {
-		urls[i] = l.URL
-	}
-	return urls, nil
-}
-
 func (r *Listings) SetPaused(ctx context.Context, listingID, chatID int64, paused bool) (*models.Listing, error) {
 	const q = `
 UPDATE listings l

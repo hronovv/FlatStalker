@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"time"
@@ -28,14 +29,14 @@ func main() {
 	defer pool.Close()
 	log.Println("database connected")
 
-	tgBot, err := appbot.New(ctx, cfg, pool)
-	if err != nil {
-		panic(err)
-	}
-
 	listings := repository.NewListings(pool)
 	seen := repository.NewSeenAds(pool)
 	users := repository.NewUsers(pool)
+
+	tgBot, err := appbot.New(ctx, cfg, users, listings)
+	if err != nil {
+		panic(err)
+	}
 
 	intervals := plan.Intervals{
 		Free: cfg.Worker.Free,
@@ -65,8 +66,15 @@ func main() {
 	}
 	me.Register(apiGroup)
 
+	srv := &http.Server{
+		Addr:         cfg.Server.Addr,
+		Handler:      router,
+		ReadTimeout:  cfg.Server.ReadTimeout,
+		WriteTimeout: cfg.Server.WriteTimeout,
+	}
+
 	log.Printf("http listening on %s", cfg.Server.Addr)
-	if err := router.Run(cfg.Server.Addr); err != nil {
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatal(err)
 	}
 }
