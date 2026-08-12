@@ -2,7 +2,6 @@ package bot
 
 import (
 	"context"
-	"log"
 
 	"flat-stalker/internal/config"
 	"flat-stalker/internal/repository"
@@ -47,16 +46,6 @@ func (b *Bot) registerHandlers() {
 
 func (b *Bot) Start() {
 	b.api.Start(b.ctx)
-}
-
-func (b *Bot) SendMessage(message, chatID string) {
-	_, err := b.api.SendMessage(b.ctx, &bot.SendMessageParams{
-		ChatID: chatID,
-		Text:   message,
-	})
-	if err != nil {
-		log.Println(err)
-	}
 }
 
 func (b *Bot) NotifyAd(ctx context.Context, chatID int64, text string) error {

@@ -48,7 +48,6 @@ func main() {
 	gin.SetMode(cfg.App.GinMode)
 	router := gin.Default()
 	router.Use(api.CORS(cfg.CORS.Origins))
-	router.POST("/message", tgBot.Message)
 
 	links := &api.LinksHandler{
 		Users:    users,
