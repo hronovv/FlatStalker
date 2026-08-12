@@ -62,6 +62,7 @@ func main() {
 
 	me := &api.MeHandler{
 		Users:     users,
+		Listings:  listings,
 		Intervals: intervals,
 	}
 	me.Register(apiGroup)
@@ -71,7 +72,15 @@ func main() {
 		Handler:      router,
 		ReadTimeout:  cfg.Server.ReadTimeout,
 		WriteTimeout: cfg.Server.WriteTimeout,
+		IdleTimeout:  60 * time.Second,
 	}
+
+	go func() {
+		<-ctx.Done()
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer shutdownCancel()
+		_ = srv.Shutdown(shutdownCtx)
+	}()
 
 	log.Printf("http listening on %s", cfg.Server.Addr)
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {

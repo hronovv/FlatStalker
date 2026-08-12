@@ -131,29 +131,32 @@ func (w *Worker) checkWatch(ctx context.Context, watch repository.Watch) error {
 	}
 
 	var fresh []kufar.Ad
-	var freshIDs []int64
 	for _, ad := range ads {
 		if _, ok := existing[ad.AdID]; ok {
 			continue
 		}
 		fresh = append(fresh, ad)
-		freshIDs = append(freshIDs, ad.AdID)
 	}
 	if len(fresh) == 0 {
 		return nil
 	}
 
+	var notified []int64
 	for _, ad := range fresh {
 		if err := w.notifier.NotifyAd(ctx, watch.ChatID, ad.FormatMessage()); err != nil {
 			log.Printf("worker: notify chat_id=%d ad=%d: %v", watch.ChatID, ad.AdID, err)
 			continue
 		}
+		notified = append(notified, ad.AdID)
+	}
+	if len(notified) == 0 {
+		return nil
 	}
 
-	if err := w.seen.MarkMany(ctx, watch.ID, freshIDs); err != nil {
+	if err := w.seen.MarkMany(ctx, watch.ID, notified); err != nil {
 		return err
 	}
 
-	log.Printf("worker: watch id=%d notified %d new ad(s)", watch.ID, len(fresh))
+	log.Printf("worker: watch id=%d notified %d new ad(s)", watch.ID, len(notified))
 	return nil
 }

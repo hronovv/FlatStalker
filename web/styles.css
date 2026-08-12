@@ -288,11 +288,6 @@ a:hover {
   margin-bottom: 16px;
 }
 
-.form {
-  display: grid;
-  gap: 14px;
-}
-
 .link-form {
   display: grid;
   gap: 14px;

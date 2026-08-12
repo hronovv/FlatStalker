@@ -44,9 +44,6 @@ func ChatID(c *gin.Context) (int64, bool) {
 }
 
 func extractInitData(c *gin.Context) string {
-	if raw := strings.TrimSpace(c.GetHeader("X-Telegram-Init-Data")); raw != "" {
-		return raw
-	}
 	auth := strings.TrimSpace(c.GetHeader("Authorization"))
 	if strings.HasPrefix(strings.ToLower(auth), "tma ") {
 		return strings.TrimSpace(auth[4:])

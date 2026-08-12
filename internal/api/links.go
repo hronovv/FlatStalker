@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"flat-stalker/internal/models"
 	"flat-stalker/internal/repository"
 	"flat-stalker/internal/source/kufar"
 
@@ -25,48 +26,25 @@ type pauseLinkRequest struct {
 }
 
 func (h *LinksHandler) Register(r gin.IRoutes) {
-	r.GET("/links", h.List)
 	r.POST("/links", h.Add)
 	r.PATCH("/links/:id", h.SetPaused)
 	r.DELETE("/links/:id", h.Delete)
 }
 
-func (h *LinksHandler) List(c *gin.Context) {
-	chatID, ok := ChatID(c)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
-
-	user, err := h.Users.GetByChatID(c.Request.Context(), chatID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to resolve user"})
-		return
-	}
-	if user == nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "user not found, press /start in the bot first"})
-		return
-	}
-
-	listings, err := h.Listings.ListByChatID(c.Request.Context(), chatID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to list links"})
-		return
-	}
-
+func listingsJSON(listings []models.Listing) []gin.H {
 	items := make([]gin.H, 0, len(listings))
 	for _, l := range listings {
-		items = append(items, gin.H{
-			"id":     l.ID,
-			"url":    l.URL,
-			"paused": l.Paused,
-		})
+		items = append(items, listingJSON(l))
 	}
+	return items
+}
 
-	c.JSON(http.StatusOK, gin.H{
-		"ok":    true,
-		"links": items,
-	})
+func listingJSON(l models.Listing) gin.H {
+	return gin.H{
+		"id":     l.ID,
+		"url":    l.URL,
+		"paused": l.Paused,
+	}
 }
 
 func (h *LinksHandler) Add(c *gin.Context) {
@@ -102,7 +80,7 @@ func (h *LinksHandler) Add(c *gin.Context) {
 		return
 	}
 
-	listing, created, err := h.Listings.Add(c.Request.Context(), user.ID, link)
+	listing, created, err := h.Listings.Add(c.Request.Context(), user.ID, chatID, link)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save link"})
 		return
@@ -154,12 +132,7 @@ func (h *LinksHandler) SetPaused(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"ok":     true,
-		"id":     listing.ID,
-		"url":    listing.URL,
-		"paused": listing.Paused,
-	})
+	c.JSON(http.StatusOK, listingJSON(*listing))
 }
 
 func (h *LinksHandler) Delete(c *gin.Context) {
@@ -212,8 +185,9 @@ func CORS(allowedOrigins []string) gin.HandlerFunc {
 			c.Header("Vary", "Origin")
 		}
 
-		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Telegram-Init-Data")
+		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
+		c.Header("Access-Control-Max-Age", "86400")
 
 		if c.Request.Method == http.MethodOptions {
 			c.AbortWithStatus(http.StatusNoContent)

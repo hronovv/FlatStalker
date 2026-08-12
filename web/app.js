@@ -337,10 +337,6 @@ function showToast(message) {
   }, 2200);
 }
 
-function chatID() {
-  return user?.id ?? null;
-}
-
 function initData() {
   return tg?.initData || "";
 }
@@ -433,16 +429,19 @@ function escapeAttr(value) {
   return escapeHTML(value).replaceAll("'", "&#39;");
 }
 
-async function loadMe() {
-  const currentEl = document.getElementById("plan-current");
+async function loadCabinet() {
   if (!hasTelegramAuth()) {
     me = null;
     meStatusKey = "plan_current_guest";
+    links = [];
+    linksEmptyKey = "links_open_tg";
     renderPlans();
+    renderLinks();
     return;
   }
 
   meStatusKey = "plan_current_loading";
+  const currentEl = document.getElementById("plan-current");
   if (currentEl) currentEl.textContent = t(meStatusKey);
 
   try {
@@ -451,13 +450,19 @@ async function loadMe() {
     if (res.status === 401) {
       me = null;
       meStatusKey = "plan_current_guest";
+      links = [];
+      linksEmptyKey = "links_open_tg";
       renderPlans();
+      renderLinks();
       return;
     }
     if (res.status === 404) {
       me = null;
       meStatusKey = "plan_current_need_start";
+      links = [];
+      linksEmptyKey = "links_need_start";
       renderPlans();
+      renderLinks();
       return;
     }
     if (!res.ok) {
@@ -465,49 +470,16 @@ async function loadMe() {
     }
     me = body;
     meStatusKey = "plan_current_loading";
+    links = Array.isArray(body.links) ? body.links : [];
+    linksEmptyKey = "links_empty";
     renderPlans();
+    renderLinks();
   } catch (err) {
     console.error(err);
     me = null;
     meStatusKey = "plan_current_error";
-    renderPlans();
-  }
-}
-
-async function loadLinks() {
-  if (!hasTelegramAuth()) {
-    linksEmptyKey = "links_open_tg";
-    if (linksEmpty) {
-      linksEmpty.textContent = t(linksEmptyKey);
-      linksEmpty.hidden = false;
-    }
-    return;
-  }
-
-  try {
-    const res = await apiFetch("/api/links");
-    const body = await res.json().catch(() => ({}));
-    if (res.status === 401) {
-      links = [];
-      linksEmptyKey = "links_open_tg";
-      renderLinks();
-      return;
-    }
-    if (res.status === 404) {
-      links = [];
-      linksEmptyKey = "links_need_start";
-      renderLinks();
-      return;
-    }
-    if (!res.ok) {
-      throw new Error(body.error || `HTTP ${res.status}`);
-    }
-    links = Array.isArray(body.links) ? body.links : [];
-    linksEmptyKey = "links_empty";
-    renderLinks();
-  } catch (err) {
-    console.error(err);
     linksEmptyKey = "links_load_error";
+    renderPlans();
     if (linksEmpty) {
       linksEmpty.textContent = t(linksEmptyKey);
       linksEmpty.hidden = false;
@@ -534,7 +506,6 @@ async function deleteLink(id) {
 
   const res = await apiFetch(`/api/links/${id}`, {
     method: "DELETE",
-    body: JSON.stringify({}),
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -711,7 +682,12 @@ linkForm?.addEventListener("submit", async (event) => {
       if (linkNote) linkNote.textContent = t("note_added");
       linkForm.reset();
       syncPasteGlow();
-      await loadLinks();
+      links = [
+        ...links,
+        { id: body.id, url: body.url, paused: Boolean(body.paused) },
+      ];
+      linksEmptyKey = "links_empty";
+      renderLinks();
     }
     linkNote?.classList.add("is-flash");
     setTimeout(() => linkNote?.classList.remove("is-flash"), 700);
@@ -725,5 +701,4 @@ linkForm?.addEventListener("submit", async (event) => {
 });
 
 applyLanguage();
-loadMe();
-loadLinks();
+loadCabinet();

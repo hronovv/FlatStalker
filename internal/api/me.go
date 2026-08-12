@@ -3,14 +3,17 @@ package api
 import (
 	"net/http"
 
+	"flat-stalker/internal/models"
 	"flat-stalker/internal/plan"
 	"flat-stalker/internal/repository"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/sync/errgroup"
 )
 
 type MeHandler struct {
 	Users     *repository.Users
+	Listings  *repository.Listings
 	Intervals plan.Intervals
 }
 
@@ -25,9 +28,24 @@ func (h *MeHandler) Get(c *gin.Context) {
 		return
 	}
 
-	user, err := h.Users.GetByChatID(c.Request.Context(), chatID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to resolve user"})
+	var (
+		user     *models.User
+		listings []models.Listing
+	)
+
+	g, ctx := errgroup.WithContext(c.Request.Context())
+	g.Go(func() error {
+		var err error
+		user, err = h.Users.GetByChatID(ctx, chatID)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		listings, err = h.Listings.ListByChatID(ctx, chatID)
+		return err
+	})
+	if err := g.Wait(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to load cabinet"})
 		return
 	}
 	if user == nil {
@@ -49,5 +67,6 @@ func (h *MeHandler) Get(c *gin.Context) {
 			plan.Plus: h.Intervals.Plus.String(),
 			plan.Pro:  h.Intervals.Pro.String(),
 		},
+		"links": listingsJSON(listings),
 	})
 }

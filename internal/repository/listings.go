@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"flat-stalker/internal/cache"
 	"flat-stalker/internal/models"
 
 	"github.com/jackc/pgx/v5"
@@ -12,7 +13,8 @@ import (
 )
 
 type Listings struct {
-	pool *pgxpool.Pool
+	pool   *pgxpool.Pool
+	byChat *cache.LRU[[]models.Listing]
 }
 
 // Watch is a saved search URL owned by a Telegram user.
@@ -21,14 +23,16 @@ type Watch struct {
 	UserID int64
 	ChatID int64
 	URL    string
-	Paused bool
 }
 
 func NewListings(pool *pgxpool.Pool) *Listings {
-	return &Listings{pool: pool}
+	return &Listings{
+		pool:   pool,
+		byChat: cache.NewLRU[[]models.Listing](cache.DefaultSize, cache.DefaultTTL),
+	}
 }
 
-func (r *Listings) Add(ctx context.Context, userID int64, url string) (*models.Listing, bool, error) {
+func (r *Listings) Add(ctx context.Context, userID, chatID int64, url string) (*models.Listing, bool, error) {
 	const q = `
 INSERT INTO listings (user_id, url)
 VALUES ($1, $2)
@@ -40,6 +44,7 @@ RETURNING id, user_id, url, paused;
 		&listing.ID, &listing.UserID, &listing.URL, &listing.Paused,
 	)
 	if err == nil {
+		r.byChat.Delete(chatID)
 		return listing, true, nil
 	}
 	if err == pgx.ErrNoRows {
@@ -49,6 +54,10 @@ RETURNING id, user_id, url, paused;
 }
 
 func (r *Listings) ListByChatID(ctx context.Context, chatID int64) ([]models.Listing, error) {
+	if cached, ok := r.byChat.Get(chatID); ok {
+		return cloneListings(cached), nil
+	}
+
 	const q = `
 SELECT l.id, l.user_id, l.url, l.paused
 FROM listings l
@@ -73,6 +82,8 @@ ORDER BY l.id;
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("list listings rows: %w", err)
 	}
+
+	r.byChat.Put(chatID, cloneListings(out))
 	return out, nil
 }
 
@@ -96,6 +107,7 @@ RETURNING l.id, l.user_id, l.url, l.paused;
 	if err != nil {
 		return nil, fmt.Errorf("set paused: %w", err)
 	}
+	r.byChat.Delete(chatID)
 	return listing, nil
 }
 
@@ -111,12 +123,15 @@ WHERE l.id = $1
 	if err != nil {
 		return false, fmt.Errorf("delete listing: %w", err)
 	}
+	if tag.RowsAffected() > 0 {
+		r.byChat.Delete(chatID)
+	}
 	return tag.RowsAffected() > 0, nil
 }
 
 func (r *Listings) ListWatches(ctx context.Context, userPlan string) ([]Watch, error) {
 	const q = `
-SELECT l.id, l.user_id, u.chat_id, l.url, l.paused
+SELECT l.id, l.user_id, u.chat_id, l.url
 FROM listings l
 JOIN users u ON u.id = l.user_id
 WHERE l.paused = false
@@ -132,7 +147,7 @@ ORDER BY l.id;
 	watches := make([]Watch, 0)
 	for rows.Next() {
 		var w Watch
-		if err := rows.Scan(&w.ID, &w.UserID, &w.ChatID, &w.URL, &w.Paused); err != nil {
+		if err := rows.Scan(&w.ID, &w.UserID, &w.ChatID, &w.URL); err != nil {
 			return nil, fmt.Errorf("scan watch: %w", err)
 		}
 		watches = append(watches, w)
@@ -141,4 +156,10 @@ ORDER BY l.id;
 		return nil, fmt.Errorf("watches rows: %w", err)
 	}
 	return watches, nil
+}
+
+func cloneListings(in []models.Listing) []models.Listing {
+	out := make([]models.Listing, len(in))
+	copy(out, in)
+	return out
 }

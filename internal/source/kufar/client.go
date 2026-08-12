@@ -27,10 +27,10 @@ func (c *Client) FetchAds(searchURL string) ([]Ad, error) {
 	if err != nil {
 		return nil, err
 	}
-	return c.FetchAdsByParams(params)
+	return c.fetchAdsByParams(params)
 }
 
-func (c *Client) FetchAdsByParams(params map[string]string) ([]Ad, error) {
+func (c *Client) fetchAdsByParams(params map[string]string) ([]Ad, error) {
 	apiURL := BuildAPIURL(params)
 
 	req, err := http.NewRequest(http.MethodGet, apiURL, nil)

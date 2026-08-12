@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"flat-stalker/internal/cache"
 	"flat-stalker/internal/models"
 	"flat-stalker/internal/plan"
 
@@ -13,14 +14,23 @@ import (
 )
 
 type Users struct {
-	pool *pgxpool.Pool
+	pool   *pgxpool.Pool
+	byChat *cache.LRU[models.User]
 }
 
 func NewUsers(pool *pgxpool.Pool) *Users {
-	return &Users{pool: pool}
+	return &Users{
+		pool:   pool,
+		byChat: cache.NewLRU[models.User](cache.DefaultSize, cache.DefaultTTL),
+	}
 }
 
 func (r *Users) GetByChatID(ctx context.Context, chatID int64) (*models.User, error) {
+	if cached, ok := r.byChat.Get(chatID); ok {
+		user := cached
+		return &user, nil
+	}
+
 	const q = `SELECT id, chat_id, plan FROM users WHERE chat_id = $1`
 	user := &models.User{}
 	err := r.pool.QueryRow(ctx, q, chatID).Scan(&user.ID, &user.ChatID, &user.Plan)
@@ -31,6 +41,7 @@ func (r *Users) GetByChatID(ctx context.Context, chatID int64) (*models.User, er
 		return nil, fmt.Errorf("get user: %w", err)
 	}
 	user.Plan = plan.Normalize(user.Plan)
+	r.byChat.Put(chatID, *user)
 	return user, nil
 }
 
@@ -48,5 +59,6 @@ RETURNING id, chat_id, plan;
 		return nil, fmt.Errorf("create user: %w", err)
 	}
 	user.Plan = plan.Normalize(user.Plan)
+	r.byChat.Put(chatID, *user)
 	return user, nil
 }
