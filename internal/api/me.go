@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"strconv"
 
 	"flat-stalker/internal/plan"
 	"flat-stalker/internal/repository"
@@ -16,13 +15,13 @@ type MeHandler struct {
 }
 
 func (h *MeHandler) Register(r gin.IRoutes) {
-	r.GET("/api/me", h.Get)
+	r.GET("/me", h.Get)
 }
 
 func (h *MeHandler) Get(c *gin.Context) {
-	chatID, err := strconv.ParseInt(c.Query("chat_id"), 10, 64)
-	if err != nil || chatID == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "chat_id is required"})
+	chatID, ok := ChatID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 

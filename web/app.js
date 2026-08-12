@@ -274,7 +274,7 @@ function renderPlans() {
   });
 
   if (!currentEl) return;
-  if (!chatID()) {
+  if (!hasTelegramAuth()) {
     currentEl.textContent = t("plan_current_guest");
     return;
   }
@@ -352,6 +352,31 @@ function chatID() {
   return user?.id ?? null;
 }
 
+function initData() {
+  return tg?.initData || "";
+}
+
+function hasTelegramAuth() {
+  return Boolean(initData());
+}
+
+function authHeaders(extra) {
+  const headers = { ...(extra || {}) };
+  const data = initData();
+  if (data) {
+    headers.Authorization = `tma ${data}`;
+  }
+  return headers;
+}
+
+async function apiFetch(path, options = {}) {
+  const headers = authHeaders(options.headers);
+  if (options.body && !headers["Content-Type"]) {
+    headers["Content-Type"] = "application/json";
+  }
+  return fetch(`${API_BASE}${path}`, { ...options, headers });
+}
+
 function shortURL(url) {
   try {
     const parsed = new URL(url);
@@ -420,9 +445,8 @@ function escapeAttr(value) {
 }
 
 async function loadMe() {
-  const chatId = chatID();
   const currentEl = document.getElementById("plan-current");
-  if (!chatId) {
+  if (!hasTelegramAuth()) {
     me = null;
     meStatusKey = "plan_current_guest";
     renderPlans();
@@ -433,8 +457,14 @@ async function loadMe() {
   if (currentEl) currentEl.textContent = t(meStatusKey);
 
   try {
-    const res = await fetch(`${API_BASE}/api/me?chat_id=${encodeURIComponent(chatId)}`);
+    const res = await apiFetch("/api/me");
     const body = await res.json().catch(() => ({}));
+    if (res.status === 401) {
+      me = null;
+      meStatusKey = "plan_current_guest";
+      renderPlans();
+      return;
+    }
     if (res.status === 404) {
       me = null;
       meStatusKey = "plan_current_need_start";
@@ -456,8 +486,7 @@ async function loadMe() {
 }
 
 async function loadLinks() {
-  const chatId = chatID();
-  if (!chatId) {
+  if (!hasTelegramAuth()) {
     linksEmptyKey = "links_open_tg";
     if (linksEmpty) {
       linksEmpty.textContent = t(linksEmptyKey);
@@ -467,8 +496,14 @@ async function loadLinks() {
   }
 
   try {
-    const res = await fetch(`${API_BASE}/api/links?chat_id=${encodeURIComponent(chatId)}`);
+    const res = await apiFetch("/api/links");
     const body = await res.json().catch(() => ({}));
+    if (res.status === 401) {
+      links = [];
+      linksEmptyKey = "links_open_tg";
+      renderLinks();
+      return;
+    }
     if (res.status === 404) {
       links = [];
       linksEmptyKey = "links_need_start";
@@ -492,13 +527,11 @@ async function loadLinks() {
 }
 
 async function setPaused(id, paused) {
-  const chatId = chatID();
-  if (!chatId) return;
+  if (!hasTelegramAuth()) return;
 
-  const res = await fetch(`${API_BASE}/api/links/${id}`, {
+  const res = await apiFetch(`/api/links/${id}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, paused }),
+    body: JSON.stringify({ paused }),
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -508,13 +541,11 @@ async function setPaused(id, paused) {
 }
 
 async function deleteLink(id) {
-  const chatId = chatID();
-  if (!chatId) return;
+  if (!hasTelegramAuth()) return;
 
-  const res = await fetch(`${API_BASE}/api/links/${id}`, {
+  const res = await apiFetch(`/api/links/${id}`, {
     method: "DELETE",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId }),
+    body: JSON.stringify({}),
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -640,8 +671,7 @@ linkList?.addEventListener("click", async (event) => {
 linkForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  const chatId = chatID();
-  if (!chatId) {
+  if (!hasTelegramAuth()) {
     showToast(t("toast_open_tg"));
     return;
   }
@@ -660,13 +690,16 @@ linkForm?.addEventListener("submit", async (event) => {
   if (linkSubmit) linkSubmit.disabled = true;
 
   try {
-    const res = await fetch(`${API_BASE}/api/links`, {
+    const res = await apiFetch("/api/links", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: chatId, url }),
+      body: JSON.stringify({ url }),
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) {
+      if (res.status === 401) {
+        showToast(t("toast_open_tg"));
+        return;
+      }
       if (res.status === 404) {
         showToast(t("toast_need_start"));
         if (linkNote) linkNote.textContent = t("note_need_start");

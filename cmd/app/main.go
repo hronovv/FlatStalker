@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"time"
 
 	"flat-stalker/internal/api"
 	appbot "flat-stalker/internal/bot"
@@ -49,17 +50,20 @@ func main() {
 	router := gin.Default()
 	router.Use(api.CORS(cfg.CORS.Origins))
 
+	apiGroup := router.Group("/api")
+	apiGroup.Use(api.TelegramAuth(cfg.Telegram.BotToken, 24*time.Hour))
+
 	links := &api.LinksHandler{
 		Users:    users,
 		Listings: listings,
 	}
-	links.Register(router)
+	links.Register(apiGroup)
 
 	me := &api.MeHandler{
 		Users:     users,
 		Intervals: intervals,
 	}
-	me.Register(router)
+	me.Register(apiGroup)
 
 	log.Printf("http listening on %s", cfg.Server.Addr)
 	if err := router.Run(cfg.Server.Addr); err != nil {
