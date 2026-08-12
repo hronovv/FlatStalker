@@ -18,16 +18,9 @@ const I18N = {
       "FlatStalker следит за объявлениями круглосуточно и сразу присылает подходящие варианты в Telegram.",
     status_title: "Мониторинг активен",
     status_sub: "Обновляем объявления",
-    filters_title: "Фильтры",
-    filters_hint:
-      "Настроишь один раз — дальше бот будет присылать подходящие объявления по РБ.",
-    city_label: "Город",
-    city_placeholder: "Например, Минск",
-    price_from: "Цена от",
-    price_to: "Цена до",
-    rooms_label: "Комнаты",
-    rooms_aria: "Количество комнат",
-    rooms_any: "Любое",
+    add_title: "Добавить поиск",
+    add_hint:
+      "Настрой фильтры на Kufar, скопируй ссылку поиска и вставь сюда — дальше бот сам пришлёт новые объявления.",
     link_label: "Ссылка",
     link_submit: "Добавить ссылку",
     link_note: "Только ссылка поиска аренды на Kufar.",
@@ -38,15 +31,15 @@ const I18N = {
     links_load_error: "Не удалось загрузить ссылки.",
     how_title: "Как это работает",
     how_1: "Открываешь бота и кабинет",
-    how_2: "Задаёшь город, бюджет и комнаты",
+    how_2: "Настраиваешь поиск на Kufar и вставляешь ссылку",
     how_3: "Получаешь уведомление со ссылкой на новое объявление",
     caps_title: "Возможности",
     cap1_title: "Следим за объявлениями",
     cap1_text: "Новые варианты не нужно искать вручную",
     cap2_title: "Быстрые уведомления",
     cap2_text: "Ссылка приходит сразу, без долгих сводок",
-    cap3_title: "Твои условия",
-    cap3_text: "Город, цена, комнаты и ссылка на поиск",
+    cap3_title: "Твой поиск с Kufar",
+    cap3_text: "Город, цена и комнаты — в ссылке поиска",
     cap4_title: "По всей РБ",
     cap4_text: "Под поиск аренды в Беларуси",
     pricing_title: "Тарифы",
@@ -102,16 +95,9 @@ const I18N = {
       "FlatStalker сочыць за аб'явамі кругласутачна і адразу прысылае падыходныя варыянты ў Telegram.",
     status_title: "Маніторынг актыўны",
     status_sub: "Абнаўляем аб'явы",
-    filters_title: "Фільтры",
-    filters_hint:
-      "Наладзіш адзін раз — далей бот будзе прысылаць падыходныя аб'явы па РБ.",
-    city_label: "Горад",
-    city_placeholder: "Напрыклад, Мінск",
-    price_from: "Цана ад",
-    price_to: "Цана да",
-    rooms_label: "Пакоі",
-    rooms_aria: "Колькасць пакояў",
-    rooms_any: "Любое",
+    add_title: "Дадаць пошук",
+    add_hint:
+      "Наладзь фільтры на Kufar, скапіюй спасылку пошуку і ўстаў сюды — далей бот сам прышле новыя аб'явы.",
     link_label: "Спасылка",
     link_submit: "Дадаць спасылку",
     link_note: "Толькі спасылка пошуку арэнды на Kufar.",
@@ -122,15 +108,15 @@ const I18N = {
     links_load_error: "Не ўдалося загрузіць спасылкі.",
     how_title: "Як гэта працуе",
     how_1: "Адкрываеш бота і кабінет",
-    how_2: "Задаеш горад, бюджэт і пакоі",
+    how_2: "Наладжваеш пошук на Kufar і ўстаўляеш спасылку",
     how_3: "Атрымліваеш апавяшчэнне са спасылкай на новую аб'яву",
     caps_title: "Магчымасці",
     cap1_title: "Сочым за аб'явамі",
     cap1_text: "Новыя варыянты не трэба шукаць уручную",
     cap2_title: "Хуткія апавяшчэнні",
     cap2_text: "Спасылка прыходзіць адразу, без доўгіх зводак",
-    cap3_title: "Твае ўмовы",
-    cap3_text: "Горад, цана, пакоі і спасылка на пошук",
+    cap3_title: "Твой пошук з Kufar",
+    cap3_text: "Горад, цана і пакоі — у спасылцы пошуку",
     cap4_title: "Па ўсёй РБ",
     cap4_text: "Пад пошук арэнды ў Беларусі",
     pricing_title: "Тарыфы",
@@ -199,8 +185,6 @@ const linkSubmit = document.getElementById("link-submit");
 const linkUrl = document.getElementById("link-url");
 const pasteLink = document.getElementById("paste-link");
 const toast = document.getElementById("toast");
-const roomsInput = document.getElementById("rooms-input");
-const roomButtons = document.querySelectorAll(".seg-btn");
 const linkList = document.getElementById("link-list");
 const linksEmpty = document.getElementById("links-empty");
 const linksCount = document.getElementById("links-count");
@@ -348,14 +332,6 @@ function setLanguage(next) {
 
 langButtons.forEach((button) => {
   button.addEventListener("click", () => setLanguage(button.dataset.lang));
-});
-
-roomButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    roomButtons.forEach((item) => item.classList.remove("is-active"));
-    button.classList.add("is-active");
-    if (roomsInput) roomsInput.value = button.dataset.rooms || "";
-  });
 });
 
 function showToast(message) {

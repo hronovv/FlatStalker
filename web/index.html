@@ -23,7 +23,7 @@
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20" />
+    <link rel="stylesheet" href="styles.css?v=21" />
   </head>
   <body>
     <main class="page">
@@ -81,51 +81,14 @@
         </div>
       </section>
 
-      <section class="panel filters reveal">
+      <section class="panel add-link reveal">
         <div class="panel-head">
-          <h1 data-i18n="filters_title">Фильтры</h1>
+          <h1 data-i18n="add_title">Добавить поиск</h1>
         </div>
-        <p class="hint" data-i18n="filters_hint">
-          Настроишь один раз — дальше бот будет присылать подходящие объявления
-          по РБ.
+        <p class="hint" data-i18n="add_hint">
+          Настрой фильтры на Kufar, скопируй ссылку поиска и вставь сюда — дальше
+          бот сам пришлёт новые объявления.
         </p>
-
-        <form class="form" id="filters-form" autocomplete="off">
-          <label class="field">
-            <span class="label" data-i18n="city_label">Город</span>
-            <input
-              type="text"
-              name="city"
-              data-i18n-placeholder="city_placeholder"
-              placeholder="Например, Минск"
-            />
-          </label>
-
-          <div class="row">
-            <label class="field">
-              <span class="label" data-i18n="price_from">Цена от</span>
-              <input type="number" name="price_min" placeholder="USD" inputmode="numeric" />
-            </label>
-            <label class="field">
-              <span class="label" data-i18n="price_to">Цена до</span>
-              <input type="number" name="price_max" placeholder="USD" inputmode="numeric" />
-            </label>
-          </div>
-
-          <div class="field">
-            <span class="label" data-i18n="rooms_label">Комнаты</span>
-            <div class="seg" role="group" aria-label="Rooms" data-i18n-aria="rooms_aria">
-              <button type="button" class="seg-btn is-active" data-rooms="" data-i18n="rooms_any">
-                Любое
-              </button>
-              <button type="button" class="seg-btn" data-rooms="1">1</button>
-              <button type="button" class="seg-btn" data-rooms="2">2</button>
-              <button type="button" class="seg-btn" data-rooms="3">3</button>
-              <button type="button" class="seg-btn" data-rooms="4+">4+</button>
-            </div>
-            <input type="hidden" name="rooms" id="rooms-input" value="" />
-          </div>
-        </form>
 
         <form class="form link-form" id="link-form" autocomplete="off">
           <div class="field">
@@ -180,7 +143,7 @@
         <div class="acc-body">
           <ol class="steps">
             <li><strong>1</strong><span data-i18n="how_1">Открываешь бота и кабинет</span></li>
-            <li><strong>2</strong><span data-i18n="how_2">Задаёшь город, бюджет и комнаты</span></li>
+            <li><strong>2</strong><span data-i18n="how_2">Настраиваешь поиск на Kufar и вставляешь ссылку</span></li>
             <li>
               <strong>3</strong
               ><span data-i18n="how_3">Получаешь уведомление со ссылкой на новое объявление</span>
@@ -221,8 +184,8 @@
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M7 7V5h10v2M8 11v6M12 11v6M16 11v6M6 21h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
               </span>
               <div>
-                <strong data-i18n="cap3_title">Твои условия</strong>
-                <span data-i18n="cap3_text">Город, цена, комнаты и ссылка на поиск</span>
+                <strong data-i18n="cap3_title">Твой поиск с Kufar</strong>
+                <span data-i18n="cap3_text">Город, цена и комнаты — в ссылке поиска</span>
               </div>
             </li>
             <li>
@@ -300,6 +263,6 @@
 
     <div class="toast" id="toast" hidden></div>
 
-    <script src="app.js?v=20"></script>
+    <script src="app.js?v=21"></script>
   </body>
 </html>
