@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"flat-stalker/internal/cache"
-
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -17,22 +15,14 @@ type Ban struct {
 }
 
 type Bans struct {
-	pool   *pgxpool.Pool
-	byChat *cache.LRU[string]
+	pool *pgxpool.Pool
 }
 
 func NewBans(pool *pgxpool.Pool) *Bans {
-	return &Bans{
-		pool:   pool,
-		byChat: cache.NewLRU[string](cache.DefaultSize, cache.DefaultTTL),
-	}
+	return &Bans{pool: pool}
 }
 
 func (r *Bans) Get(ctx context.Context, chatID int64) (*Ban, error) {
-	if reason, ok := r.byChat.Get(chatID); ok {
-		return &Ban{Reason: reason}, nil
-	}
-
 	const q = `SELECT reason FROM banned_users WHERE chat_id = $1`
 	var reason *string
 	err := r.pool.QueryRow(ctx, q, chatID).Scan(&reason)
@@ -46,7 +36,6 @@ func (r *Bans) Get(ctx context.Context, chatID int64) (*Ban, error) {
 	if reason != nil {
 		text = strings.TrimSpace(*reason)
 	}
-	r.byChat.Put(chatID, text)
 	return &Ban{Reason: text}, nil
 }
 

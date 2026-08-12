@@ -29,11 +29,6 @@ func (b *Bot) startHandler(ctx context.Context, _ *bot.Bot, update *models.Updat
 	}
 	if _, err := b.users.CreateByChatID(ctx, chatID); err != nil {
 		if errors.Is(err, repository.ErrBanned) {
-			reason := ""
-			if ban, banErr := b.bans.Get(ctx, chatID); banErr == nil && ban != nil {
-				reason = ban.Reason
-			}
-			b.sendBanNotice(ctx, chatID, reason)
 			return
 		}
 		log.Printf("start: create user chat_id=%d: %v", chatID, err)
@@ -111,8 +106,6 @@ func (b *Bot) linksCallbackHandler(ctx context.Context, _ *bot.Bot, update *mode
 	} else if banned {
 		_, _ = b.api.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{
 			CallbackQueryID: cq.ID,
-			Text:            "Доступ закрыт",
-			ShowAlert:       true,
 		})
 		return
 	}
@@ -352,28 +345,12 @@ func (b *Bot) helpHandler(ctx context.Context, _ *bot.Bot, update *models.Update
 }
 
 func (b *Bot) rejectIfBanned(ctx context.Context, chatID int64) bool {
-	ban, err := b.bans.Get(ctx, chatID)
+	banned, err := b.bans.IsBanned(ctx, chatID)
 	if err != nil {
 		log.Printf("ban check chat_id=%d: %v", chatID, err)
 		return false
 	}
-	if ban == nil {
-		return false
-	}
-	b.sendBanNotice(ctx, chatID, ban.Reason)
-	return true
-}
-
-func (b *Bot) sendBanNotice(ctx context.Context, chatID int64, reason string) {
-	text := "Доступ к FlatStalker сейчас закрыт."
-	if reason = strings.TrimSpace(reason); reason != "" {
-		text += "\nПричина: " + reason
-	}
-	text += fmt.Sprintf("\nЕсли это ошибка — напиши %s, разберёмся.", b.config.Telegram.SupportContact)
-	_, _ = b.api.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID: chatID,
-		Text:   text,
-	})
+	return banned
 }
 
 func botBool(v bool) *bool {
