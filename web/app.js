@@ -195,6 +195,7 @@ let links = [];
 let linksEmptyKey = "links_empty";
 let me = null;
 let meStatusKey = "plan_current_loading";
+const cabinetCacheKey = user?.id ? `flatstalker_cabinet_${user.id}` : "";
 
 function t(key, vars) {
   const dict = I18N[lang] || I18N.ru;
@@ -429,6 +430,52 @@ function escapeAttr(value) {
   return escapeHTML(value).replaceAll("'", "&#39;");
 }
 
+function readCabinetCache() {
+  if (!cabinetCacheKey) return null;
+  try {
+    const raw = localStorage.getItem(cabinetCacheKey);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data || typeof data !== "object" || !Array.isArray(data.links)) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function writeCabinetCache() {
+  if (!cabinetCacheKey || !me) return;
+  try {
+    localStorage.setItem(
+      cabinetCacheKey,
+      JSON.stringify({
+        ...me,
+        links,
+      })
+    );
+  } catch {
+    /* quota / private mode */
+  }
+}
+
+function clearCabinetCache() {
+  if (!cabinetCacheKey) return;
+  try {
+    localStorage.removeItem(cabinetCacheKey);
+  } catch {
+    /* ignore */
+  }
+}
+
+function applyCabinet(body) {
+  me = body;
+  meStatusKey = "plan_current_loading";
+  links = Array.isArray(body.links) ? body.links : [];
+  linksEmptyKey = "links_empty";
+  renderPlans();
+  renderLinks();
+}
+
 async function loadCabinet() {
   if (!hasTelegramAuth()) {
     me = null;
@@ -440,14 +487,20 @@ async function loadCabinet() {
     return;
   }
 
-  meStatusKey = "plan_current_loading";
-  const currentEl = document.getElementById("plan-current");
-  if (currentEl) currentEl.textContent = t(meStatusKey);
+  const cached = readCabinetCache();
+  if (cached) {
+    applyCabinet(cached);
+  } else {
+    meStatusKey = "plan_current_loading";
+    const currentEl = document.getElementById("plan-current");
+    if (currentEl) currentEl.textContent = t(meStatusKey);
+  }
 
   try {
     const res = await apiFetch("/api/me");
     const body = await res.json().catch(() => ({}));
     if (res.status === 401) {
+      clearCabinetCache();
       me = null;
       meStatusKey = "plan_current_guest";
       links = [];
@@ -457,6 +510,7 @@ async function loadCabinet() {
       return;
     }
     if (res.status === 404) {
+      clearCabinetCache();
       me = null;
       meStatusKey = "plan_current_need_start";
       links = [];
@@ -468,14 +522,11 @@ async function loadCabinet() {
     if (!res.ok) {
       throw new Error(body.error || `HTTP ${res.status}`);
     }
-    me = body;
-    meStatusKey = "plan_current_loading";
-    links = Array.isArray(body.links) ? body.links : [];
-    linksEmptyKey = "links_empty";
-    renderPlans();
-    renderLinks();
+    applyCabinet(body);
+    writeCabinetCache();
   } catch (err) {
     console.error(err);
+    if (cached) return;
     me = null;
     meStatusKey = "plan_current_error";
     linksEmptyKey = "links_load_error";
@@ -602,6 +653,7 @@ linkList?.addEventListener("click", async (event) => {
       await setPaused(id, nextPaused);
       link.paused = nextPaused;
       renderLinks();
+      writeCabinetCache();
       showToast(nextPaused ? t("toast_paused") : t("toast_resumed"));
       return;
     }
@@ -618,6 +670,7 @@ linkList?.addEventListener("click", async (event) => {
       await deleteLink(id);
       links = links.filter((item) => Number(item.id) !== id);
       renderLinks();
+      writeCabinetCache();
       showToast(t("toast_deleted"));
     }
   } catch (err) {
@@ -688,6 +741,7 @@ linkForm?.addEventListener("submit", async (event) => {
       ];
       linksEmptyKey = "links_empty";
       renderLinks();
+      writeCabinetCache();
     }
     linkNote?.classList.add("is-flash");
     setTimeout(() => linkNote?.classList.remove("is-flash"), 700);
