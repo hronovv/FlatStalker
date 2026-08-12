@@ -278,9 +278,10 @@ func (b *Bot) statusHandler(ctx context.Context, _ *bot.Bot, update *models.Upda
 	}.For(userPlan)
 
 	text := fmt.Sprintf(
-		"Твой тариф: %s\nПроверка объявлений: %s",
+		"Твой тариф: %s\nПроверка объявлений: %s\nСсылок поиска: до %d",
 		plan.Label(userPlan),
 		plan.FormatIntervalRU(interval),
+		plan.LinkLimit(userPlan),
 	)
 
 	_, err = b.api.SendMessage(b.ctx, &bot.SendMessageParams{

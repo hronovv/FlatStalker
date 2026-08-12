@@ -55,6 +55,7 @@ func (h *MeHandler) Get(c *gin.Context) {
 
 	userPlan := plan.Normalize(user.Plan)
 	interval := h.Intervals.For(userPlan)
+	limit := plan.LinkLimit(userPlan)
 
 	c.JSON(http.StatusOK, gin.H{
 		"ok":          true,
@@ -62,10 +63,16 @@ func (h *MeHandler) Get(c *gin.Context) {
 		"plan_label":  plan.Label(userPlan),
 		"interval":    interval.String(),
 		"interval_ms": interval.Milliseconds(),
+		"link_limit":  limit,
 		"intervals": gin.H{
 			plan.Free: h.Intervals.Free.String(),
 			plan.Plus: h.Intervals.Plus.String(),
 			plan.Pro:  h.Intervals.Pro.String(),
+		},
+		"link_limits": gin.H{
+			plan.Free: plan.LinkLimit(plan.Free),
+			plan.Plus: plan.LinkLimit(plan.Plus),
+			plan.Pro:  plan.LinkLimit(plan.Pro),
 		},
 		"links": listingsJSON(listings),
 	})

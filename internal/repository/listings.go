@@ -87,6 +87,15 @@ ORDER BY l.id;
 	return out, nil
 }
 
+func (r *Listings) CountByUserID(ctx context.Context, userID int64) (int, error) {
+	const q = `SELECT COUNT(*) FROM listings WHERE user_id = $1`
+	var n int
+	if err := r.pool.QueryRow(ctx, q, userID).Scan(&n); err != nil {
+		return 0, fmt.Errorf("count listings: %w", err)
+	}
+	return n, nil
+}
+
 func (r *Listings) SetPaused(ctx context.Context, listingID, chatID int64, paused bool) (*models.Listing, error) {
 	const q = `
 UPDATE listings l

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"flat-stalker/internal/models"
+	"flat-stalker/internal/plan"
 	"flat-stalker/internal/repository"
 	"flat-stalker/internal/source/kufar"
 
@@ -77,6 +78,22 @@ func (h *LinksHandler) Add(c *gin.Context) {
 	}
 	if user == nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "user not found, press /start in the bot first"})
+		return
+	}
+
+	limit := plan.LinkLimit(user.Plan)
+	count, err := h.Listings.CountByUserID(c.Request.Context(), user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save link"})
+		return
+	}
+	if count >= limit {
+		c.JSON(http.StatusConflict, gin.H{
+			"error": "link limit reached",
+			"code":  "link_limit",
+			"limit": limit,
+			"used":  count,
+		})
 		return
 	}
 

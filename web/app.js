@@ -50,6 +50,9 @@ const I18N = {
     plan_current_need_start: "Сначала нажми /start в боте.",
     plan_current_error: "Не удалось загрузить тариф.",
     plan_interval_every: "Проверка объявлений {interval}",
+    plan_links_one: "{n} ссылка",
+    plan_links_few: "{n} ссылки",
+    plan_links_many: "{n} ссылок",
     interval_seconds: "каждые {n} сек",
     interval_minutes: "каждые {n} мин",
     pricing_note: "Цены и оплату добавим позже.",
@@ -78,11 +81,13 @@ const I18N = {
     toast_need_start: "Сначала нажми /start в боте",
     toast_exists: "Такая ссылка уже есть",
     toast_added: "Ссылка добавлена",
+    toast_limit: "Лимит тарифа: {used} из {limit}",
     toast_add_fail: "Не удалось добавить",
     note_kufar_only: "Пока парсим только поиск аренды на Kufar.",
     note_need_start: "Нужен /start в боте, потом снова добавь ссылку.",
     note_duplicate: "Дубликат не сохраняем.",
     note_added: "Добавлено. Управление — в списке ниже.",
+    note_limit: "Удали ссылку или смени тариф, чтобы добавить новую.",
     note_api_error: "Ошибка. Проверь, что backend запущен и api= доступен.",
     confirm_delete: "Удалить эту ссылку?",
   },
@@ -127,6 +132,9 @@ const I18N = {
     plan_current_need_start: "Спачатку націсні /start у боце.",
     plan_current_error: "Не ўдалося загрузіць тарыф.",
     plan_interval_every: "Праверка аб'яў {interval}",
+    plan_links_one: "{n} спасылка",
+    plan_links_few: "{n} спасылкі",
+    plan_links_many: "{n} спасылак",
     interval_seconds: "кожныя {n} сек",
     interval_minutes: "кожныя {n} хв",
     pricing_note: "Цэны і аплату дададзім пазней.",
@@ -155,11 +163,13 @@ const I18N = {
     toast_need_start: "Спачатку націсні /start у боце",
     toast_exists: "Такая спасылка ўжо ёсць",
     toast_added: "Спасылка дададзена",
+    toast_limit: "Ліміт тарыфу: {used} з {limit}",
     toast_add_fail: "Не ўдалося дадаць",
     note_kufar_only: "Пакуль парсім толькі пошук арэнды на Kufar.",
     note_need_start: "Патрэбны /start у боце, потым зноў дадай спасылку.",
     note_duplicate: "Дублікат не захоўваем.",
     note_added: "Дададзена. Кіраванне — у спісе ніжэй.",
+    note_limit: "Выдалі спасылку або змяні тарыф, каб дадаць новую.",
     note_api_error: "Памылка. Правер, што backend запушчаны і api= даступны.",
     confirm_delete: "Выдаліць гэтую спасылку?",
   },
@@ -251,6 +261,36 @@ const DEFAULT_PLAN_INTERVALS = {
   pro: "30s",
 };
 
+const DEFAULT_LINK_LIMITS = {
+  free: 1,
+  plus: 3,
+  pro: 5,
+};
+
+function pluralKey(base, n) {
+  const abs = Math.abs(Number(n)) % 100;
+  const digit = abs % 10;
+  if (abs > 10 && abs < 20) return `${base}_many`;
+  if (digit === 1) return `${base}_one`;
+  if (digit >= 2 && digit <= 4) return `${base}_few`;
+  return `${base}_many`;
+}
+
+function linkLimitFor(planName) {
+  const fromMe = me?.link_limits?.[planName];
+  if (Number.isFinite(Number(fromMe))) return Number(fromMe);
+  return DEFAULT_LINK_LIMITS[planName] || DEFAULT_LINK_LIMITS.free;
+}
+
+function currentLinkLimit() {
+  if (Number.isFinite(Number(me?.link_limit))) return Number(me.link_limit);
+  return linkLimitFor(me?.plan || "free");
+}
+
+function atLinkLimit() {
+  return Boolean(me) && links.length >= currentLinkLimit();
+}
+
 function renderPlans() {
   const currentEl = document.getElementById("plan-current");
   const cards = document.querySelectorAll("[data-plan]");
@@ -270,6 +310,11 @@ function renderPlans() {
       intervalEl.textContent = raw
         ? t("plan_interval_every", { interval: formatInterval(raw) })
         : "";
+    }
+    const linksEl = card.querySelector("[data-plan-links]");
+    if (linksEl) {
+      const n = linkLimitFor(name);
+      linksEl.textContent = t(pluralKey("plan_links", n), { n });
     }
   });
 
@@ -377,7 +422,14 @@ function renderLinks() {
   if (!linkList || !linksEmpty) return;
 
   if (linksCount) {
-    linksCount.textContent = links.length ? String(links.length) : "";
+    if (me) {
+      linksCount.textContent = `${links.length} / ${currentLinkLimit()}`;
+    } else {
+      linksCount.textContent = links.length ? String(links.length) : "";
+    }
+  }
+  if (linkSubmit) {
+    linkSubmit.disabled = atLinkLimit();
   }
 
   if (links.length === 0) {
@@ -699,6 +751,11 @@ linkForm?.addEventListener("submit", async (event) => {
     if (linkNote) linkNote.textContent = t("note_kufar_only");
     return;
   }
+  if (atLinkLimit()) {
+    showToast(t("toast_limit", { used: links.length, limit: currentLinkLimit() }));
+    if (linkNote) linkNote.textContent = t("note_limit");
+    return;
+  }
 
   if (linkSubmit) linkSubmit.disabled = true;
 
@@ -716,6 +773,13 @@ linkForm?.addEventListener("submit", async (event) => {
       if (res.status === 404) {
         showToast(t("toast_need_start"));
         if (linkNote) linkNote.textContent = t("note_need_start");
+        return;
+      }
+      if (res.status === 409) {
+        const limit = body.limit ?? currentLinkLimit();
+        const used = body.used ?? links.length;
+        showToast(t("toast_limit", { used, limit }));
+        if (linkNote) linkNote.textContent = t("note_limit");
         return;
       }
       if (res.status === 400) {
@@ -750,7 +814,7 @@ linkForm?.addEventListener("submit", async (event) => {
     showToast(t("toast_add_fail"));
     if (linkNote) linkNote.textContent = t("note_api_error");
   } finally {
-    if (linkSubmit) linkSubmit.disabled = false;
+    if (linkSubmit) linkSubmit.disabled = atLinkLimit();
   }
 });
 

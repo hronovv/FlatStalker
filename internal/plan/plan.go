@@ -49,6 +49,17 @@ func Label(name string) string {
 	}
 }
 
+func LinkLimit(name string) int {
+	switch Normalize(name) {
+	case Plus:
+		return 3
+	case Pro:
+		return 5
+	default:
+		return 1
+	}
+}
+
 // FormatIntervalRU returns a short Russian phrase like "каждые 5 минут".
 func FormatIntervalRU(d time.Duration) string {
 	if d < time.Minute {
