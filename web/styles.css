@@ -755,6 +755,12 @@ body.is-banned .ban-screen {
   display: grid;
 }
 
+.ban-lang {
+  position: absolute;
+  top: calc(16px + env(safe-area-inset-top, 0px));
+  right: calc(16px + env(safe-area-inset-right, 0px));
+}
+
 .ban-card {
   position: relative;
   width: min(420px, 100%);
