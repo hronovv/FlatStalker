@@ -9,6 +9,7 @@ import (
 	"flat-stalker/internal/plan"
 	"flat-stalker/internal/repository"
 	"flat-stalker/internal/source/kufar"
+	"flat-stalker/internal/worker"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,6 +17,8 @@ import (
 type LinksHandler struct {
 	Users    *repository.Users
 	Listings *repository.Listings
+	Seen     *repository.SeenAds
+	Kufar    *kufar.Client
 }
 
 type addLinkRequest struct {
@@ -110,6 +113,8 @@ func (h *LinksHandler) Add(c *gin.Context) {
 		})
 		return
 	}
+
+	worker.SeedFromURLAsync(h.Kufar, h.Seen, listing.ID, listing.URL)
 
 	c.JSON(http.StatusOK, gin.H{
 		"ok":      true,

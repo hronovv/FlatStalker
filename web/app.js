@@ -15,9 +15,9 @@ const I18N = {
     eyebrow: "Умный поиск аренды",
     hero_title: "Новая квартира — раньше других",
     hero_text:
-      "FlatStalker следит за объявлениями круглосуточно и сразу присылает подходящие варианты в Telegram.",
+      "FlatStalker следит за твоим поиском и присылает новые объявления в Telegram.",
     status_title: "Мониторинг активен",
-    status_sub: "Обновляем объявления",
+    status_sub: "Проверка по тарифу",
     add_title: "Добавить поиск",
     add_hint:
       "Настрой фильтры на Kufar, скопируй ссылку поиска и вставь сюда — дальше бот сам пришлёт новые объявления.",
@@ -55,6 +55,8 @@ const I18N = {
     plan_links_many: "{n} ссылок",
     interval_seconds: "каждые {n} сек",
     interval_minutes: "каждые {n} мин",
+    interval_short_seconds: "{n} сек",
+    interval_short_minutes: "{n} мин",
     pricing_note: "Цены и оплату добавим позже.",
     faq_q: "Есть вопрос по FlatStalker?",
     faq_a: "Напиши",
@@ -97,9 +99,9 @@ const I18N = {
     eyebrow: "Разумны пошук арэнды",
     hero_title: "Новая кватэра — раней за іншых",
     hero_text:
-      "FlatStalker сочыць за аб'явамі кругласутачна і адразу прысылае падыходныя варыянты ў Telegram.",
+      "FlatStalker сочыць за тваім пошукам і прысылае новыя аб'явы ў Telegram.",
     status_title: "Маніторынг актыўны",
-    status_sub: "Абнаўляем аб'явы",
+    status_sub: "Праверка па тарыфе",
     add_title: "Дадаць пошук",
     add_hint:
       "Наладзь фільтры на Kufar, скапіюй спасылку пошуку і ўстаў сюды — далей бот сам прышле новыя аб'явы.",
@@ -137,6 +139,8 @@ const I18N = {
     plan_links_many: "{n} спасылак",
     interval_seconds: "кожныя {n} сек",
     interval_minutes: "кожныя {n} хв",
+    interval_short_seconds: "{n} сек",
+    interval_short_minutes: "{n} хв",
     pricing_note: "Цэны і аплату дададзім пазней.",
     faq_q: "Ёсць пытанне па FlatStalker?",
     faq_a: "Напішы",
@@ -226,6 +230,16 @@ function formatInterval(raw) {
     return t("interval_seconds", { n: Math.max(1, Math.round(totalMs / 1000)) });
   }
   return t("interval_minutes", { n: Math.max(1, Math.round(totalMs / 60000)) });
+}
+
+function formatIntervalShort(raw) {
+  if (!raw && raw !== 0) return "—";
+  const totalMs = parseGoDuration(raw);
+  if (totalMs <= 0) return "—";
+  if (totalMs < 60000) {
+    return t("interval_short_seconds", { n: Math.max(1, Math.round(totalMs / 1000)) });
+  }
+  return t("interval_short_minutes", { n: Math.max(1, Math.round(totalMs / 60000)) });
 }
 
 function parseGoDuration(raw) {
@@ -318,19 +332,26 @@ function renderPlans() {
     }
   });
 
+  const statusEl = document.getElementById("status-interval");
+
   if (!currentEl) return;
   if (!hasTelegramAuth()) {
     currentEl.textContent = t("plan_current_guest");
+    if (statusEl) statusEl.textContent = "—";
     return;
   }
   if (!me) {
     currentEl.textContent = t(meStatusKey);
+    if (statusEl) statusEl.textContent = "—";
     return;
   }
   currentEl.textContent = t("plan_current", {
     plan: me.plan_label || String(me.plan || "").toUpperCase(),
     interval: formatInterval(me.interval),
   });
+  if (statusEl) {
+    statusEl.textContent = formatIntervalShort(me.interval);
+  }
 }
 
 function applyLanguage() {

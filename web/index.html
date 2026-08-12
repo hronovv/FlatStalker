@@ -23,7 +23,7 @@
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=27" />
+    <link rel="stylesheet" href="styles.css?v=28" />
   </head>
   <body>
     <main class="page">
@@ -67,17 +67,17 @@
           <p class="eyebrow" data-i18n="eyebrow">Умный поиск аренды</p>
           <h1 data-i18n="hero_title">Новая квартира — раньше других</h1>
           <p data-i18n="hero_text">
-            FlatStalker следит за объявлениями круглосуточно и сразу присылает
-            подходящие варианты в Telegram.
+            FlatStalker следит за твоим поиском и присылает новые объявления в
+            Telegram.
           </p>
         </div>
         <div class="watch-status">
           <span class="status-pulse" aria-hidden="true"></span>
           <span
             ><strong data-i18n="status_title">Мониторинг активен</strong
-            ><span data-i18n="status_sub">Обновляем объявления</span></span
+            ><span data-i18n="status_sub">Проверка по тарифу</span></span
           >
-          <span class="status-time">24/7</span>
+          <span class="status-time" id="status-interval">—</span>
         </div>
       </section>
 
@@ -266,6 +266,6 @@
 
     <div class="toast" id="toast" hidden></div>
 
-    <script src="app.js?v=27"></script>
+    <script src="app.js?v=28"></script>
   </body>
 </html>

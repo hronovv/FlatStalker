@@ -28,10 +28,14 @@ func New(
 	listings *repository.Listings,
 	seen *repository.SeenAds,
 	notifier Notifier,
+	client *kufar.Client,
 ) *Worker {
+	if client == nil {
+		client = kufar.NewClient()
+	}
 	return &Worker{
 		intervals: intervals,
-		client:    kufar.NewClient(),
+		client:    client,
 		listings:  listings,
 		seen:      seen,
 		notifier:  notifier,
@@ -116,7 +120,6 @@ func (w *Worker) checkWatch(ctx context.Context, watch repository.Watch) error {
 		return err
 	}
 
-	// First poll: seed current ads without spamming the user.
 	if count == 0 {
 		if err := w.seen.MarkMany(ctx, watch.ID, adIDs); err != nil {
 			return err

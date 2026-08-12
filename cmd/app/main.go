@@ -14,6 +14,7 @@ import (
 	"flat-stalker/internal/db"
 	"flat-stalker/internal/plan"
 	"flat-stalker/internal/repository"
+	"flat-stalker/internal/source/kufar"
 	"flat-stalker/internal/worker"
 
 	"github.com/gin-gonic/gin"
@@ -44,8 +45,10 @@ func main() {
 		Pro:  cfg.Worker.Pro,
 	}
 
+	kufarClient := kufar.NewClient()
+
 	go tgBot.Start()
-	go worker.New(intervals, listings, seen, tgBot).Start(ctx)
+	go worker.New(intervals, listings, seen, tgBot, kufarClient).Start(ctx)
 
 	gin.SetMode(cfg.App.GinMode)
 	router := gin.Default()
@@ -57,6 +60,8 @@ func main() {
 	links := &api.LinksHandler{
 		Users:    users,
 		Listings: listings,
+		Seen:     seen,
+		Kufar:    kufarClient,
 	}
 	links.Register(apiGroup)
 
