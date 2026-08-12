@@ -2,6 +2,7 @@ package bot
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -9,6 +10,7 @@ import (
 
 	appmodels "flat-stalker/internal/models"
 	"flat-stalker/internal/plan"
+	"flat-stalker/internal/repository"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
@@ -113,34 +115,16 @@ func (b *Bot) linksCallbackHandler(ctx context.Context, _ *bot.Bot, update *mode
 	switch action {
 	case "p":
 		listing, err := b.listings.SetPaused(ctx, listingID, chatID, true)
-		if err != nil || listing == nil {
-			_, _ = b.api.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{
-				CallbackQueryID: cq.ID,
-				Text:            "Не удалось поставить на паузу",
-				ShowAlert:       true,
-			})
+		if !b.answerPause(ctx, cq.ID, err, listing, true) {
 			return
 		}
-		_, _ = b.api.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{
-			CallbackQueryID: cq.ID,
-			Text:            "На паузе",
-		})
 		b.refreshListingMessage(ctx, msg.Chat.ID, msg.ID, listing)
 
 	case "r":
 		listing, err := b.listings.SetPaused(ctx, listingID, chatID, false)
-		if err != nil || listing == nil {
-			_, _ = b.api.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{
-				CallbackQueryID: cq.ID,
-				Text:            "Не удалось возобновить",
-				ShowAlert:       true,
-			})
+		if !b.answerPause(ctx, cq.ID, err, listing, false) {
 			return
 		}
-		_, _ = b.api.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{
-			CallbackQueryID: cq.ID,
-			Text:            "Снова активна",
-		})
 		b.refreshListingMessage(ctx, msg.Chat.ID, msg.ID, listing)
 
 	case "d":
@@ -170,6 +154,35 @@ func (b *Bot) linksCallbackHandler(ctx context.Context, _ *bot.Bot, update *mode
 			ShowAlert:       true,
 		})
 	}
+}
+
+func (b *Bot) answerPause(ctx context.Context, callbackID string, err error, listing *appmodels.Listing, pausing bool) bool {
+	if errors.Is(err, repository.ErrBusy) {
+		_, _ = b.api.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{
+			CallbackQueryID: callbackID,
+			Text:            "Подожди секунду",
+		})
+		return false
+	}
+	fail := "Не удалось возобновить"
+	ok := "Снова активна"
+	if pausing {
+		fail = "Не удалось поставить на паузу"
+		ok = "На паузе"
+	}
+	if err != nil || listing == nil {
+		_, _ = b.api.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{
+			CallbackQueryID: callbackID,
+			Text:            fail,
+			ShowAlert:       true,
+		})
+		return false
+	}
+	_, _ = b.api.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{
+		CallbackQueryID: callbackID,
+		Text:            ok,
+	})
+	return true
 }
 
 func (b *Bot) refreshListingMessage(ctx context.Context, chatID int64, messageID int, listing *appmodels.Listing) {

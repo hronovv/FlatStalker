@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
+	"time"
 
 	"flat-stalker/internal/cache"
 	"flat-stalker/internal/models"
@@ -12,9 +14,15 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+var ErrBusy = errors.New("too many updates")
+
+const pauseCooldown = time.Second
+
 type Listings struct {
-	pool   *pgxpool.Pool
-	byChat *cache.LRU[[]models.Listing]
+	pool     *pgxpool.Pool
+	byChat   *cache.LRU[[]models.Listing]
+	pauseMu  sync.Mutex
+	pausedAt map[int64]time.Time
 }
 
 // Watch is a saved search URL owned by a Telegram user.
@@ -27,8 +35,9 @@ type Watch struct {
 
 func NewListings(pool *pgxpool.Pool) *Listings {
 	return &Listings{
-		pool:   pool,
-		byChat: cache.NewLRU[[]models.Listing](cache.DefaultSize, cache.DefaultTTL),
+		pool:     pool,
+		byChat:   cache.NewLRU[[]models.Listing](cache.DefaultSize, cache.DefaultTTL),
+		pausedAt: make(map[int64]time.Time),
 	}
 }
 
@@ -97,6 +106,10 @@ func (r *Listings) CountByUserID(ctx context.Context, userID int64) (int, error)
 }
 
 func (r *Listings) SetPaused(ctx context.Context, listingID, chatID int64, paused bool) (*models.Listing, error) {
+	if !r.allowPause(listingID) {
+		return nil, ErrBusy
+	}
+
 	const q = `
 UPDATE listings l
 SET paused = $3
@@ -136,6 +149,17 @@ WHERE l.id = $1
 		r.byChat.Delete(chatID)
 	}
 	return tag.RowsAffected() > 0, nil
+}
+
+func (r *Listings) allowPause(listingID int64) bool {
+	now := time.Now()
+	r.pauseMu.Lock()
+	defer r.pauseMu.Unlock()
+	if t, ok := r.pausedAt[listingID]; ok && now.Sub(t) < pauseCooldown {
+		return false
+	}
+	r.pausedAt[listingID] = now
+	return true
 }
 
 func (r *Listings) ListWatches(ctx context.Context, userPlan string) ([]Watch, error) {

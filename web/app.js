@@ -77,6 +77,7 @@ const I18N = {
     toast_copy_fail: "Не удалось скопировать",
     toast_deleted: "Ссылка удалена",
     toast_update_fail: "Не удалось обновить",
+    toast_slow: "Слишком часто — подожди секунду",
     toast_open_tg: "Открой Mini App из Telegram",
     toast_paste_link: "Вставь ссылку",
     toast_need_kufar: "Нужна ссылка kufar.by",
@@ -161,6 +162,7 @@ const I18N = {
     toast_copy_fail: "Не ўдалося скапіяваць",
     toast_deleted: "Спасылка выдалена",
     toast_update_fail: "Не ўдалося абнавіць",
+    toast_slow: "Занадта часта — пачакай секунду",
     toast_open_tg: "Адкрый Mini App з Telegram",
     toast_paste_link: "Устаў спасылку",
     toast_need_kufar: "Патрэбна спасылка kufar.by",
@@ -210,6 +212,7 @@ let linksEmptyKey = "links_empty";
 let me = null;
 let meStatusKey = "plan_current_loading";
 const cabinetCacheKey = user?.id ? `flatstalker_cabinet_${user.id}` : "";
+const busyLinks = new Set();
 
 function t(key, vars) {
   const dict = I18N[lang] || I18N.ru;
@@ -489,6 +492,12 @@ function renderLinks() {
       `;
     })
     .join("");
+
+  busyLinks.forEach((busyId) => {
+    linkList.querySelectorAll(`button[data-id="${busyId}"]`).forEach((el) => {
+      el.disabled = true;
+    });
+  });
 }
 
 function escapeHTML(value) {
@@ -619,6 +628,11 @@ async function setPaused(id, paused) {
     body: JSON.stringify({ paused }),
   });
   const body = await res.json().catch(() => ({}));
+  if (res.status === 429) {
+    const err = new Error("slow");
+    err.code = "slow";
+    throw err;
+  }
   if (!res.ok) {
     throw new Error(body.error || `HTTP ${res.status}`);
   }
@@ -710,7 +724,14 @@ linkList?.addEventListener("click", async (event) => {
   const link = links.find((item) => Number(item.id) === id);
   if (!link) return;
 
+  if ((action === "toggle" || action === "delete") && busyLinks.has(id)) {
+    return;
+  }
+
   button.disabled = true;
+  if (action === "toggle" || action === "delete") {
+    busyLinks.add(id);
+  }
   try {
     if (action === "copy") {
       await copyText(link.url);
@@ -748,9 +769,22 @@ linkList?.addEventListener("click", async (event) => {
     }
   } catch (err) {
     console.error(err);
-    showToast(action === "copy" ? t("toast_copy_fail") : t("toast_update_fail"));
+    if (err?.code === "slow") {
+      showToast(t("toast_slow"));
+    } else {
+      showToast(action === "copy" ? t("toast_copy_fail") : t("toast_update_fail"));
+    }
   } finally {
-    button.disabled = false;
+    if (action === "toggle") {
+      setTimeout(() => {
+        busyLinks.delete(id);
+        renderLinks();
+      }, 1000);
+    } else if (action === "delete") {
+      busyLinks.delete(id);
+    } else {
+      button.disabled = false;
+    }
   }
 });
 

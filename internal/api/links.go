@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -145,6 +146,10 @@ func (h *LinksHandler) SetPaused(c *gin.Context) {
 	}
 
 	listing, err := h.Listings.SetPaused(c.Request.Context(), listingID, chatID, *req.Paused)
+	if errors.Is(err, repository.ErrBusy) {
+		c.JSON(http.StatusTooManyRequests, gin.H{"error": "too many requests", "code": "slow"})
+		return
+	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update link"})
 		return
