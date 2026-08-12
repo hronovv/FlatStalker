@@ -795,10 +795,39 @@ body.is-banned .ban-screen {
 }
 
 .ban-text {
-  margin: 12px 0 22px;
+  margin: 12px 0 16px;
   color: var(--muted);
   font-size: 0.96rem;
   line-height: 1.55;
+}
+
+.ban-reason-block {
+  margin: 0 0 22px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 230, 0, 0.22);
+  border-radius: 10px;
+  background: rgba(255, 230, 0, 0.06);
+}
+
+.ban-reason-block[hidden] {
+  display: none;
+}
+
+.ban-reason-label {
+  margin: 0 0 6px;
+  color: #ffe600;
+  font: 700 0.68rem/1 var(--mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ban-reason {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.94rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .ban-contact {

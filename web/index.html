@@ -52,7 +52,7 @@
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=33" />
+    <link rel="stylesheet" href="styles.css?v=34" />
   </head>
   <body>
     <main class="page">
@@ -304,6 +304,10 @@
           Сейчас этот аккаунт не может пользоваться FlatStalker. Если так вышло
           по ошибке — напиши, спокойно разберёмся.
         </p>
+        <div class="ban-reason-block" id="ban-reason-block" hidden>
+          <p class="ban-reason-label" data-i18n="ban_reason_label">Причина</p>
+          <p class="ban-reason" id="ban-reason"></p>
+        </div>
         <button type="button" class="ban-contact" id="ban-contact">
           <span data-i18n="ban_contact">Связаться</span>
           <span id="ban-handle">@bazan_ivan</span>
@@ -311,6 +315,6 @@
       </div>
     </section>
 
-    <script src="app.js?v=33"></script>
+    <script src="app.js?v=34"></script>
   </body>
 </html>

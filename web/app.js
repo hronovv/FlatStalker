@@ -97,6 +97,7 @@ const I18N = {
     ban_title: "Кабинет на паузе",
     ban_text:
       "Сейчас этот аккаунт не может пользоваться FlatStalker. Если так вышло по ошибке — напиши, спокойно разберёмся.",
+    ban_reason_label: "Причина",
     ban_contact: "Связаться",
   },
   by: {
@@ -187,6 +188,7 @@ const I18N = {
     ban_title: "Кабінет на паўзе",
     ban_text:
       "Зараз гэты акаўнт не можа карыстацца FlatStalker. Калі так выйшла памылкова — напішы, спакойна разбярэмся.",
+    ban_reason_label: "Прычына",
     ban_contact: "Звязацца",
   },
 };
@@ -444,7 +446,7 @@ async function apiFetch(path, options = {}) {
   if (res.status === 403) {
     const body = await res.clone().json().catch(() => ({}));
     if (body.code === "banned") {
-      showBanScreen(body.support);
+      showBanScreen(body.support, body.reason);
     }
   }
   return res;
@@ -484,18 +486,23 @@ function openSupportChat(handle) {
   openTelegramUrl(supportUrl(handle));
 }
 
-function showBanScreen(support) {
+function showBanScreen(support, reason) {
   const screen = document.getElementById("ban-screen");
   const contact = document.getElementById("ban-contact");
   const handleEl = document.getElementById("ban-handle");
+  const reasonBlock = document.getElementById("ban-reason-block");
+  const reasonEl = document.getElementById("ban-reason");
   const handle = supportHandle(support);
-  writeBanCache(handle);
+  const reasonText = normalizeBanReason(reason);
+  writeBanCache(handle, reasonText);
   clearCabinetCache();
   document.documentElement.classList.remove("cabinet-ready");
   document.documentElement.classList.add("is-banned");
   document.body.classList.add("is-banned");
   if (handleEl) handleEl.textContent = handle;
   if (contact) contact.dataset.tg = handle.replace(/^@/, "");
+  if (reasonEl) reasonEl.textContent = reasonText;
+  if (reasonBlock) reasonBlock.hidden = !reasonText;
   screen?.querySelectorAll("[data-i18n]").forEach((el) => {
     const key = el.dataset.i18n;
     if (key) el.textContent = t(key);
@@ -509,7 +516,7 @@ function hideBanScreen() {
 
 function bootFromCache() {
   const banned = readBanCache();
-  if (banned) showBanScreen(banned.support);
+  if (banned) showBanScreen(banned.support, banned.reason);
 }
 
 function revealCabinet() {
@@ -647,12 +654,22 @@ function readBanCache() {
   }
 }
 
-function writeBanCache(support) {
+function normalizeBanReason(raw) {
+  return String(raw || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 500);
+}
+
+function writeBanCache(support, reason) {
   if (!banCacheKey) return;
   try {
     localStorage.setItem(
       banCacheKey,
-      JSON.stringify({ support: supportHandle(support) })
+      JSON.stringify({
+        support: supportHandle(support),
+        reason: normalizeBanReason(reason),
+      })
     );
   } catch {
     /* ignore */
@@ -691,7 +708,7 @@ async function loadCabinet() {
 
   const banned = readBanCache();
   if (banned) {
-    showBanScreen(banned.support);
+    showBanScreen(banned.support, banned.reason);
   } else {
     const cached = readCabinetCache();
     if (cached) {

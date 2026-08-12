@@ -30,16 +30,17 @@ func TelegramAuth(botToken string, maxAge time.Duration, bans *repository.Bans, 
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid telegram user"})
 			return
 		}
-		banned, err := bans.IsBanned(c.Request.Context(), user.ID)
+		ban, err := bans.Get(c.Request.Context(), user.ID)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "auth failed"})
 			return
 		}
-		if banned {
+		if ban != nil {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 				"error":   "access closed",
 				"code":    "banned",
 				"support": support,
+				"reason":  ban.Reason,
 			})
 			return
 		}
