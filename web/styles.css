@@ -719,16 +719,22 @@ a:hover {
   transform: translateX(-50%) translateY(0);
 }
 
+html:not(.cabinet-ready):not(.is-banned) .page {
+  visibility: hidden;
+}
+
+html.is-banned .page,
+html.is-banned .toast,
 body.is-banned .page,
 body.is-banned .toast {
-  display: none;
+  display: none !important;
 }
 
 .ban-screen {
+  display: none;
   position: fixed;
   inset: 0;
   z-index: 40;
-  display: grid;
   place-items: center;
   padding:
     calc(28px + env(safe-area-inset-top, 0px))
@@ -744,8 +750,9 @@ body.is-banned .toast {
     var(--bg);
 }
 
-.ban-screen[hidden] {
-  display: none;
+html.is-banned .ban-screen,
+body.is-banned .ban-screen {
+  display: grid;
 }
 
 .ban-card {

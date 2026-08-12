@@ -222,6 +222,7 @@ let linksEmptyKey = "links_empty";
 let me = null;
 let meStatusKey = "plan_current_loading";
 const cabinetCacheKey = user?.id ? `flatstalker_cabinet_${user.id}` : "";
+const banCacheKey = user?.id ? `flatstalker_banned_${user.id}` : "";
 const busyLinks = new Set();
 
 function t(key, vars) {
@@ -459,15 +460,32 @@ function showBanScreen(support) {
   const contact = document.getElementById("ban-contact");
   const handleEl = document.getElementById("ban-handle");
   const handle = supportHandle(support);
-  document.body.classList.add("is-banned");
+  writeBanCache(handle);
   clearCabinetCache();
+  document.documentElement.classList.remove("cabinet-ready");
+  document.documentElement.classList.add("is-banned");
+  document.body.classList.add("is-banned");
   if (handleEl) handleEl.textContent = handle;
   if (contact) contact.href = `https://t.me/${handle.replace(/^@/, "")}`;
   screen?.querySelectorAll("[data-i18n]").forEach((el) => {
     const key = el.dataset.i18n;
     if (key) el.textContent = t(key);
   });
-  if (screen) screen.hidden = false;
+}
+
+function hideBanScreen() {
+  document.documentElement.classList.remove("is-banned");
+  document.body.classList.remove("is-banned");
+}
+
+function bootFromCache() {
+  const banned = readBanCache();
+  if (banned) showBanScreen(banned.support);
+}
+
+function revealCabinet() {
+  if (document.documentElement.classList.contains("is-banned")) return;
+  document.documentElement.classList.add("cabinet-ready");
 }
 
 function shortURL(url) {
@@ -587,6 +605,40 @@ function clearCabinetCache() {
   }
 }
 
+function readBanCache() {
+  if (!banCacheKey) return null;
+  try {
+    const raw = localStorage.getItem(banCacheKey);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data || typeof data !== "object") return { support: "@bazan_ivan" };
+    return data;
+  } catch {
+    return { support: "@bazan_ivan" };
+  }
+}
+
+function writeBanCache(support) {
+  if (!banCacheKey) return;
+  try {
+    localStorage.setItem(
+      banCacheKey,
+      JSON.stringify({ support: supportHandle(support) })
+    );
+  } catch {
+    /* ignore */
+  }
+}
+
+function clearBanCache() {
+  if (!banCacheKey) return;
+  try {
+    localStorage.removeItem(banCacheKey);
+  } catch {
+    /* ignore */
+  }
+}
+
 function applyCabinet(body) {
   me = body;
   meStatusKey = "plan_current_loading";
@@ -604,22 +656,30 @@ async function loadCabinet() {
     linksEmptyKey = "links_open_tg";
     renderPlans();
     renderLinks();
+    revealCabinet();
     return;
   }
 
-  const cached = readCabinetCache();
-  if (cached) {
-    applyCabinet(cached);
+  const banned = readBanCache();
+  if (banned) {
+    showBanScreen(banned.support);
   } else {
-    meStatusKey = "plan_current_loading";
-    const currentEl = document.getElementById("plan-current");
-    if (currentEl) currentEl.textContent = t(meStatusKey);
+    const cached = readCabinetCache();
+    if (cached) {
+      applyCabinet(cached);
+      revealCabinet();
+    }
   }
 
   try {
     const res = await apiFetch("/api/me");
     const body = await res.json().catch(() => ({}));
+    if (res.status === 403 && body.code === "banned") {
+      return;
+    }
     if (res.status === 401) {
+      clearBanCache();
+      hideBanScreen();
       clearCabinetCache();
       me = null;
       meStatusKey = "plan_current_guest";
@@ -627,9 +687,12 @@ async function loadCabinet() {
       linksEmptyKey = "links_open_tg";
       renderPlans();
       renderLinks();
+      revealCabinet();
       return;
     }
     if (res.status === 404) {
+      clearBanCache();
+      hideBanScreen();
       clearCabinetCache();
       me = null;
       meStatusKey = "plan_current_need_start";
@@ -637,16 +700,24 @@ async function loadCabinet() {
       linksEmptyKey = "links_need_start";
       renderPlans();
       renderLinks();
+      revealCabinet();
       return;
     }
     if (!res.ok) {
       throw new Error(body.error || `HTTP ${res.status}`);
     }
+    clearBanCache();
+    hideBanScreen();
     applyCabinet(body);
     writeCabinetCache();
+    revealCabinet();
   } catch (err) {
     console.error(err);
-    if (cached) return;
+    if (readBanCache()) return;
+    if (readCabinetCache()) {
+      revealCabinet();
+      return;
+    }
     me = null;
     meStatusKey = "plan_current_error";
     linksEmptyKey = "links_load_error";
@@ -655,6 +726,7 @@ async function loadCabinet() {
       linksEmpty.textContent = t(linksEmptyKey);
       linksEmpty.hidden = false;
     }
+    revealCabinet();
   }
 }
 
@@ -911,5 +983,6 @@ linkForm?.addEventListener("submit", async (event) => {
   }
 });
 
+bootFromCache();
 applyLanguage();
 loadCabinet();

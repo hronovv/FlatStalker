@@ -7,6 +7,20 @@
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
     <title>FlatStalker</title>
+    <style>
+      html, body { background: #08111f; }
+      html:not(.cabinet-ready):not(.is-banned) .page { visibility: hidden; }
+      html.is-banned .page,
+      html.is-banned .toast { display: none !important; }
+      .ban-screen { display: none; }
+      html.is-banned .ban-screen {
+        display: grid;
+        position: fixed;
+        inset: 0;
+        z-index: 40;
+        place-items: center;
+      }
+    </style>
     <script>
       (function () {
         var base = document.createElement("base");
@@ -17,13 +31,28 @@
       })();
     </script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+      (function () {
+        try {
+          var id =
+            window.Telegram &&
+            Telegram.WebApp &&
+            Telegram.WebApp.initDataUnsafe &&
+            Telegram.WebApp.initDataUnsafe.user &&
+            Telegram.WebApp.initDataUnsafe.user.id;
+          if (id && localStorage.getItem("flatstalker_banned_" + id)) {
+            document.documentElement.classList.add("is-banned");
+          }
+        } catch (e) {}
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=30" />
+    <link rel="stylesheet" href="styles.css?v=32" />
   </head>
   <body>
     <main class="page">
@@ -266,7 +295,7 @@
 
     <div class="toast" id="toast" hidden></div>
 
-    <section class="ban-screen" id="ban-screen" hidden>
+    <section class="ban-screen" id="ban-screen">
       <div class="ban-card">
         <p class="ban-tape" aria-hidden="true">CLOSED · CLOSED · CLOSED</p>
         <p class="ban-stamp" data-i18n="ban_stamp">ДОСТУП ЗАКРЫТ</p>
@@ -282,6 +311,6 @@
       </div>
     </section>
 
-    <script src="app.js?v=30"></script>
+    <script src="app.js?v=32"></script>
   </body>
 </html>
