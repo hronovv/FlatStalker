@@ -455,6 +455,35 @@ function supportHandle(raw) {
   return handle.startsWith("@") ? handle : `@${handle}`;
 }
 
+function supportUrl(handle) {
+  return `https://t.me/${supportHandle(handle).replace(/^@/, "")}`;
+}
+
+function openTelegramUrl(url) {
+  if (!url) return;
+  try {
+    if (typeof tg?.openTelegramLink === "function") {
+      tg.openTelegramLink(url);
+      return;
+    }
+  } catch {
+    /* desktop webview */
+  }
+  try {
+    if (typeof tg?.openLink === "function") {
+      tg.openLink(url, { try_instant_view: false });
+      return;
+    }
+  } catch {
+    /* ignore */
+  }
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
+function openSupportChat(handle) {
+  openTelegramUrl(supportUrl(handle));
+}
+
 function showBanScreen(support) {
   const screen = document.getElementById("ban-screen");
   const contact = document.getElementById("ban-contact");
@@ -466,7 +495,7 @@ function showBanScreen(support) {
   document.documentElement.classList.add("is-banned");
   document.body.classList.add("is-banned");
   if (handleEl) handleEl.textContent = handle;
-  if (contact) contact.href = `https://t.me/${handle.replace(/^@/, "")}`;
+  if (contact) contact.dataset.tg = handle.replace(/^@/, "");
   screen?.querySelectorAll("[data-i18n]").forEach((el) => {
     const key = el.dataset.i18n;
     if (key) el.textContent = t(key);
@@ -981,6 +1010,21 @@ linkForm?.addEventListener("submit", async (event) => {
   } finally {
     if (linkSubmit) linkSubmit.disabled = atLinkLimit();
   }
+});
+
+document.getElementById("ban-contact")?.addEventListener("click", () => {
+  const handle =
+    document.getElementById("ban-handle")?.textContent ||
+    document.getElementById("ban-contact")?.dataset.tg;
+  openSupportChat(handle);
+});
+
+document.addEventListener("click", (event) => {
+  const link = event.target.closest?.('a[href^="https://t.me/"]');
+  if (!link) return;
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  event.preventDefault();
+  openTelegramUrl(link.href);
 });
 
 bootFromCache();

@@ -777,6 +777,7 @@ body.is-banned .ban-screen {
   color: #111;
   font: 800 0.68rem/1 var(--mono);
   letter-spacing: 0.14em;
+  pointer-events: none;
 }
 
 .ban-stamp {
@@ -805,13 +806,16 @@ body.is-banned .ban-screen {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  width: 100%;
   min-height: 50px;
   padding: 0 16px;
+  border: 0;
   border-radius: 10px;
   background: var(--accent);
   color: var(--accent-ink);
   font: 700 0.92rem var(--mono);
   text-decoration: none;
+  cursor: pointer;
 }
 
 .ban-contact:hover {
