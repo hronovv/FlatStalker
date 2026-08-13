@@ -69,6 +69,7 @@ const I18N = {
     plan_renew: "Продлить",
     plan_best: "Лучший выбор",
     plan_lock_until: "У тебя {plan} до {date}",
+    plan_lock_forever: "У тебя {plan} навсегда, подарок от {handle}",
     pay_kicker: "Оплата тарифа",
     pay_period: "Срок: {period}",
     pay_confirm: "Оплатить {amount} BYN",
@@ -189,6 +190,7 @@ const I18N = {
     plan_renew: "Падоўжыць",
     plan_best: "Найлепшы выбар",
     plan_lock_until: "У цябе {plan} да {date}",
+    plan_lock_forever: "У цябе {plan} назаўжды, падарунак ад {handle}",
     pay_kicker: "Аплата тарыфу",
     pay_period: "Тэрмін: {period}",
     pay_confirm: "Аплаціць {amount} BYN",
@@ -541,10 +543,17 @@ function renderPlans() {
     if (lockEl) {
       lockEl.hidden = !blocked;
       if (blocked) {
-        lockEl.textContent = t("plan_lock_until", {
-          plan: currentPlanLabel(),
-          date: formatPlanDate(me.plan_expires_at),
-        });
+        if (me.plan_expires_at) {
+          lockEl.textContent = t("plan_lock_until", {
+            plan: currentPlanLabel(),
+            date: formatPlanDate(me.plan_expires_at),
+          });
+        } else {
+          lockEl.textContent = t("plan_lock_forever", {
+            plan: currentPlanLabel(),
+            handle: "@bazan_ivan",
+          });
+        }
       }
     }
     if (buyEl) {

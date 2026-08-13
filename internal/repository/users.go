@@ -84,6 +84,8 @@ func (r *Users) ApplyPlan(ctx context.Context, chatID int64, newPlan string, day
 UPDATE users
 SET plan = $2,
     plan_expires_at = CASE
+        WHEN plan = $2 AND plan_expires_at IS NULL
+            THEN NULL
         WHEN plan = $2 AND plan_expires_at IS NOT NULL AND plan_expires_at > now()
             THEN plan_expires_at + ($3 * INTERVAL '1 day')
         ELSE now() + ($3 * INTERVAL '1 day')
