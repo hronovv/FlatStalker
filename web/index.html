@@ -53,7 +53,7 @@
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=39" />
+    <link rel="stylesheet" href="styles.css?v=43" />
   </head>
   <body>
     <main class="page">
@@ -240,8 +240,13 @@
         </summary>
         <div class="acc-body">
           <p class="hint" id="plan-current" data-i18n="plan_current_loading">Загружаем твой тариф…</p>
-          <div class="plan-periods" id="plan-periods" role="tablist" aria-label="Срок тарифа"></div>
-          <p class="plan-period-hint" id="plan-period-hint"></p>
+          <div class="plan-period-block">
+            <p class="plan-period-hint">
+              <span data-i18n="plan_period_hint">Цена за</span>
+              <span class="plan-period-value" id="plan-period-value"></span>
+            </p>
+            <div class="plan-periods" id="plan-periods" role="tablist" aria-label="Срок тарифа"></div>
+          </div>
           <div class="plans">
             <article class="plan" data-plan="free">
               <div class="plan-head">
@@ -351,6 +356,6 @@
       </div>
     </section>
 
-    <script src="app.js?v=39"></script>
+    <script src="app.js?v=43"></script>
   </body>
 </html>

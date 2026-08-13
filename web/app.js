@@ -61,7 +61,7 @@ const I18N = {
     plan_price_day: "{amount} BYN/день",
     plan_price_free: "Бесплатно",
     plan_period_chip: "{n}д",
-    plan_period_hint: "Цена за {period}",
+    plan_period_hint: "Цена за",
     plan_days_one: "{n} день",
     plan_days_few: "{n} дня",
     plan_days_many: "{n} дней",
@@ -176,7 +176,7 @@ const I18N = {
     plan_price_day: "{amount} BYN/дзень",
     plan_price_free: "Бясплатна",
     plan_period_chip: "{n}д",
-    plan_period_hint: "Цана за {period}",
+    plan_period_hint: "Цана за",
     plan_days_one: "{n} дзень",
     plan_days_few: "{n} дні",
     plan_days_many: "{n} дзён",
@@ -442,10 +442,10 @@ function renderPeriodChips() {
       return btn;
     })
   );
-  const hint = document.getElementById("plan-period-hint");
-  if (hint) {
-    hint.textContent = t("plan_period_hint", {
-      period: t(pluralKey("plan_days", selectedPeriodDays), { n: selectedPeriodDays }),
+  const value = document.getElementById("plan-period-value");
+  if (value) {
+    value.textContent = t(pluralKey("plan_days", selectedPeriodDays), {
+      n: selectedPeriodDays,
     });
   }
 }
