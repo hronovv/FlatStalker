@@ -65,6 +65,19 @@ func (h *PayHandler) Create(c *gin.Context) {
 		return
 	}
 
+	if plan.Rank(planName) < plan.Rank(user.Plan) {
+		resp := gin.H{
+			"error":        "downgrade_blocked",
+			"code":         "downgrade_blocked",
+			"current_plan": user.Plan,
+		}
+		if user.PlanExpiresAt != nil {
+			resp["plan_expires_at"] = user.PlanExpiresAt.UTC().Format("2006-01-02T15:04:05Z")
+		}
+		c.JSON(http.StatusConflict, resp)
+		return
+	}
+
 	payment, err := h.Payments.Create(c.Request.Context(), user.ID, planName, req.Days, kop)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create payment"})

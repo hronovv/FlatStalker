@@ -53,7 +53,7 @@
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=52" />
+    <link rel="stylesheet" href="styles.css?v=53" />
   </head>
   <body>
     <main class="page">
@@ -271,6 +271,7 @@
               <p class="plan-interval" data-plan-interval="plus"></p>
               <p class="plan-links" data-plan-links="plus"></p>
               <button type="button" class="plan-buy" data-plan-buy="plus"></button>
+              <p class="plan-lock" data-plan-lock hidden></p>
             </article>
             <article class="plan plan-pro" data-plan="pro">
               <div class="plan-head">
@@ -286,6 +287,7 @@
               <p class="plan-interval" data-plan-interval="pro"></p>
               <p class="plan-links" data-plan-links="pro"></p>
               <button type="button" class="plan-buy" data-plan-buy="pro"></button>
+              <p class="plan-lock" data-plan-lock hidden></p>
             </article>
           </div>
           <p class="acc-note" data-i18n="pricing_note">Оплата тестовая через Telegram.</p>
@@ -329,6 +331,7 @@
         <p class="pay-desktop-note" id="pay-desktop-note" data-i18n="pay_desktop_note">
           Не все версии Telegram проводят оплату. Если ты на компьютере — открой приложение на телефоне.
         </p>
+        <p class="pay-upgrade-note" id="pay-upgrade-note" hidden></p>
         <p class="pay-status" id="pay-status" hidden></p>
         <button type="button" class="plan-buy" id="pay-confirm"></button>
         <button type="button" class="pay-cancel" id="pay-cancel" data-i18n="pay_cancel">Отмена</button>
@@ -359,6 +362,6 @@
       </div>
     </section>
 
-    <script src="app.js?v=52"></script>
+    <script src="app.js?v=53"></script>
   </body>
 </html>

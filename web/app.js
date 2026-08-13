@@ -68,18 +68,22 @@ const I18N = {
     plan_buy: "Купить",
     plan_renew: "Продлить",
     plan_best: "Лучший выбор",
+    plan_lock_until: "У тебя {plan} до {date}",
     pay_kicker: "Оплата тарифа",
     pay_period: "Срок: {period}",
     pay_confirm: "Оплатить {amount} BYN",
     pay_cancel: "Отмена",
     pay_desktop_note:
       "Не все версии Telegram проводят оплату. Если ты на компьютере — открой приложение на телефоне.",
+    pay_upgrade_note:
+      "Остаток текущего тарифа сгорит. Новый срок начнётся сегодня.",
     pay_sent_chat: "Счёт отправили в чат с ботом. Закрой кабинет и оплати там.",
     pay_open_chat: "Открыть чат",
     toast_pay_guest: "Открой кабинет из Telegram",
     toast_pay_start: "Сначала нажми /start в боте",
     toast_pay_open: "Открой Mini App из Telegram",
     toast_pay_fail: "Не удалось открыть оплату",
+    toast_pay_downgrade: "Сначала дождись окончания {plan}",
     toast_pay_cancel: "Оплата отменена",
     toast_pay_paid: "Оплата прошла",
     pricing_note: "Оплата тестовая через Telegram.",
@@ -184,18 +188,22 @@ const I18N = {
     plan_buy: "Купіць",
     plan_renew: "Падоўжыць",
     plan_best: "Найлепшы выбар",
+    plan_lock_until: "У цябе {plan} да {date}",
     pay_kicker: "Аплата тарыфу",
     pay_period: "Тэрмін: {period}",
     pay_confirm: "Аплаціць {amount} BYN",
     pay_cancel: "Адмена",
     pay_desktop_note:
       "Не ўсе версіі Telegram праводзяць аплату. Калі ты на камп'ютары — адкрый прыкладанне на тэлефоне.",
+    pay_upgrade_note:
+      "Рэшта бягучага тарыфу згарыць. Новы тэрмін пачнецца сёння.",
     pay_sent_chat: "Рахунак адправілі ў чат з ботам. Закрый кабінет і аплаці там.",
     pay_open_chat: "Адкрыць чат",
     toast_pay_guest: "Адкрый кабінет з Telegram",
     toast_pay_start: "Спачатку націсні /start у боце",
     toast_pay_open: "Адкрый Mini App з Telegram",
     toast_pay_fail: "Не ўдалося адкрыць аплату",
+    toast_pay_downgrade: "Спачатку дачакай канца {plan}",
     toast_pay_cancel: "Аплата адменена",
     toast_pay_paid: "Аплата прайшла",
     pricing_note: "Аплата тэставая праз Telegram.",
@@ -423,6 +431,39 @@ function perDayAmount(amount, days) {
   return (total / days).toFixed(2);
 }
 
+const PLAN_RANK = { free: 0, plus: 1, pro: 2 };
+
+function planRank(name) {
+  return PLAN_RANK[name] || 0;
+}
+
+function currentPlanName() {
+  return me?.plan || "free";
+}
+
+function isPlanDowngrade(name) {
+  return Boolean(me) && planRank(name) < planRank(currentPlanName());
+}
+
+function isPlanUpgrade(name) {
+  return Boolean(me) && planRank(name) > planRank(currentPlanName());
+}
+
+function formatPlanDate(iso) {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString(lang === "by" ? "be-BY" : "ru-RU", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function currentPlanLabel() {
+  return me?.plan_label || String(currentPlanName() || "").toUpperCase();
+}
+
 function renderPeriodChips() {
   const root = document.getElementById("plan-periods");
   if (!root) return;
@@ -495,9 +536,21 @@ function renderPlans() {
       linksEl.textContent = t(pluralKey("plan_links", n), { n });
     }
     const buyEl = card.querySelector("[data-plan-buy]");
+    const lockEl = card.querySelector("[data-plan-lock]");
+    const blocked = isPlanDowngrade(name);
+    if (lockEl) {
+      lockEl.hidden = !blocked;
+      if (blocked) {
+        lockEl.textContent = t("plan_lock_until", {
+          plan: currentPlanLabel(),
+          date: formatPlanDate(me.plan_expires_at),
+        });
+      }
+    }
     if (buyEl) {
       buyEl.hidden = name === "free";
-      buyEl.disabled = paying;
+      buyEl.disabled = paying || blocked;
+      buyEl.classList.toggle("is-locked", blocked);
       buyEl.textContent = isCurrent ? t("plan_renew") : t("plan_buy");
     }
   });
@@ -574,6 +627,7 @@ const payConfirm = document.getElementById("pay-confirm");
 const payCancel = document.getElementById("pay-cancel");
 const payClose = document.getElementById("pay-close");
 const payDesktopNote = document.getElementById("pay-desktop-note");
+const payUpgradeNote = document.getElementById("pay-upgrade-note");
 let payPlan = "";
 let payBotURL = "";
 
@@ -601,6 +655,10 @@ function openPaySheet(planName) {
     showToast(t("toast_pay_start"));
     return;
   }
+  if (isPlanDowngrade(planName)) {
+    showToast(t("toast_pay_downgrade", { plan: currentPlanLabel() }));
+    return;
+  }
   const amount = planAmount(planName, selectedPeriodDays);
   if (!amount) {
     showToast(t("toast_pay_fail"));
@@ -621,6 +679,10 @@ function openPaySheet(planName) {
   if (payDesktopNote) {
     payDesktopNote.hidden = canPayInThisClient();
     payDesktopNote.textContent = t("pay_desktop_note");
+  }
+  if (payUpgradeNote) {
+    payUpgradeNote.hidden = !isPlanUpgrade(planName);
+    payUpgradeNote.textContent = t("pay_upgrade_note");
   }
   if (payStatus) {
     payStatus.hidden = true;
@@ -647,7 +709,12 @@ async function buyPlan() {
       body: JSON.stringify({ plan: payPlan, days: selectedPeriodDays }),
     });
     if (!res.ok) {
-      showToast(t("toast_pay_fail"));
+      const fail = await res.json().catch(() => ({}));
+      if (fail.code === "downgrade_blocked") {
+        showToast(t("toast_pay_downgrade", { plan: currentPlanLabel() }));
+      } else {
+        showToast(t("toast_pay_fail"));
+      }
       paying = false;
       if (payConfirm) payConfirm.disabled = false;
       renderPlans();

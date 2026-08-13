@@ -713,6 +713,17 @@ a:hover {
   cursor: wait;
 }
 
+.plan-buy.is-locked:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.plan-lock {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font: 600 0.72rem/1.35 var(--mono);
+}
+
 html.pay-open {
   overflow: hidden;
 }
@@ -790,6 +801,19 @@ html.pay-open {
 }
 
 .pay-desktop-note[hidden] {
+  display: none;
+}
+
+.pay-upgrade-note {
+  margin: 8px 0 2px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(65, 217, 196, 0.08);
+  color: var(--muted);
+  font: 600 0.72rem/1.45 var(--mono);
+}
+
+.pay-upgrade-note[hidden] {
   display: none;
 }
 
