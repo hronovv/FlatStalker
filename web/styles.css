@@ -646,7 +646,7 @@ a:hover {
 
 .plan-price-day {
   color: var(--muted);
-  font: 600 0.72rem/1.2 var(--mono);
+  font: 600 0.82rem/1.2 var(--mono);
 }
 
 .plans {
