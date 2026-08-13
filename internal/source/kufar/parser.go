@@ -6,22 +6,28 @@ import (
 	"net/url"
 	"sort"
 	"strings"
+	"unicode"
 )
 
 const APIBase = "https://api.kufar.by/search-api/v2/search/rendered-paginated"
 
-var pathDefaults = map[string]map[string]string{
-	"minsk": {
-		"gtsy": "country-belarus~province-minsk~locality-minsk",
-		"rgn":  "7",
-	},
-	"snyat":           {"typ": "let"},
-	"kvartiru":        {"cat": "1010"},
-	"bez-posrednikov": {"cmp": "0"},
-}
-
 func isAPIQueryParam(key string) bool {
 	return !strings.HasPrefix(key, "_") && !strings.HasPrefix(key, "r_")
+}
+
+func isListingPrefix(segment string) bool {
+	if segment == "l" {
+		return true
+	}
+	if !strings.HasPrefix(segment, "l") || len(segment) < 2 {
+		return false
+	}
+	for _, r := range segment[1:] {
+		if !unicode.IsDigit(r) {
+			return false
+		}
+	}
+	return true
 }
 
 // ParseSearchURL turns a Kufar search page URL into API query params.
@@ -39,14 +45,30 @@ func ParseSearchURL(rawURL string) (map[string]string, error) {
 	}
 
 	params := make(map[string]string)
+	unknownGeo := false
 
 	for segment := range strings.SplitSeq(strings.Trim(parsed.Path, "/"), "/") {
-		if strings.HasPrefix(segment, "l") {
+		segment = strings.ToLower(strings.TrimSpace(segment))
+		if segment == "" || isListingPrefix(segment) {
 			continue
 		}
-		if defaults, ok := pathDefaults[segment]; ok {
-			maps.Copy(params, defaults)
+		if extra, ok := pathTokens[segment]; ok {
+			maps.Copy(params, extra)
+			continue
 		}
+		if slug, ok := strings.CutPrefix(segment, "metro-"); ok {
+			if mee, found := metroIDs[slug]; found {
+				params["mee"] = mee
+			} else {
+				unknownGeo = true
+			}
+			continue
+		}
+		if extra, ok := placeParams[segment]; ok {
+			maps.Copy(params, extra)
+			continue
+		}
+		unknownGeo = true
 	}
 
 	query := parsed.Query()
@@ -61,6 +83,10 @@ func ParseSearchURL(rawURL string) (map[string]string, error) {
 		params[key] = decoded
 	}
 
+	if params["cat"] != "" && params["typ"] != "" && (params["gtsy"] == "" || unknownGeo) {
+		_ = resolveMissingGeo(rawURL, params)
+	}
+
 	if _, ok := params["size"]; !ok {
 		params["size"] = "30"
 	}
@@ -69,6 +95,10 @@ func ParseSearchURL(rawURL string) (map[string]string, error) {
 	}
 	if _, ok := params["cur"]; !ok {
 		params["cur"] = "BYR"
+	}
+
+	if params["gtsy"] == gtsyBelarus && !pathHasSegment(parsed.Path, "belarus") {
+		return nil, fmt.Errorf("не удалось определить город по ссылке Kufar")
 	}
 
 	required := []string{"cat", "typ", "gtsy"}
@@ -86,6 +116,15 @@ func ParseSearchURL(rawURL string) (map[string]string, error) {
 	}
 
 	return params, nil
+}
+
+func pathHasSegment(path, want string) bool {
+	for segment := range strings.SplitSeq(strings.Trim(path, "/"), "/") {
+		if strings.EqualFold(segment, want) {
+			return true
+		}
+	}
+	return false
 }
 
 func ValidateSearchURL(rawURL string) error {
