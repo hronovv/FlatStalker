@@ -678,20 +678,38 @@ a:hover {
 }
 
 .plan-buy {
-  margin-top: 6px;
-  min-height: 36px;
+  margin-top: 8px;
+  min-height: 40px;
   padding: 0 12px;
-  border: 0;
+  border: 1px solid transparent;
   border-radius: 10px;
   background: var(--accent);
   color: var(--accent-ink);
-  font: 700 0.78rem/1 var(--mono);
+  box-shadow: 0 8px 20px rgba(65, 217, 196, 0.28);
+  font: 700 0.8rem/1 var(--mono);
   letter-spacing: 0.03em;
   cursor: pointer;
 }
 
+.plan-plus .plan-buy {
+  background: transparent;
+  border-color: rgba(65, 217, 196, 0.55);
+  color: var(--accent);
+  box-shadow: none;
+}
+
+.plan-pro .plan-buy {
+  box-shadow: 0 8px 22px rgba(65, 217, 196, 0.4);
+}
+
+.plan-buy:hover {
+  filter: brightness(1.06);
+}
+
 .plan-buy:disabled {
   opacity: 0.55;
+  filter: none;
+  box-shadow: none;
   cursor: wait;
 }
 
@@ -810,7 +828,7 @@ html.pay-open {
   box-shadow: 0 0 0 1px rgba(65, 217, 196, 0.25);
 }
 
-.plan:not(.is-current) {
+.plan[data-plan="free"]:not(.is-current) {
   opacity: 0.72;
 }
 
@@ -826,6 +844,14 @@ html.pay-open {
   color: var(--text);
   font: 700 0.9rem/1.2 var(--mono);
   letter-spacing: 0.04em;
+}
+
+.plan-best {
+  margin: 4px 0 0;
+  color: var(--accent);
+  font: 700 0.65rem/1 var(--mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .plan-badge {
@@ -855,9 +881,9 @@ html.pay-open {
 }
 
 .plan-pro {
-  border-color: rgba(65, 217, 196, 0.45);
+  border-color: var(--accent);
   background:
-    linear-gradient(180deg, rgba(65, 217, 196, 0.06), transparent 70%),
+    linear-gradient(180deg, rgba(65, 217, 196, 0.1), transparent 72%),
     var(--surface-2);
 }
 
