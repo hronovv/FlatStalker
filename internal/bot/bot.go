@@ -17,9 +17,10 @@ type Bot struct {
 	users    *repository.Users
 	listings *repository.Listings
 	bans     *repository.Bans
+	payments *repository.Payments
 }
 
-func New(ctx context.Context, cfg *config.Config, users *repository.Users, listings *repository.Listings, bans *repository.Bans) (*Bot, error) {
+func New(ctx context.Context, cfg *config.Config, users *repository.Users, listings *repository.Listings, bans *repository.Bans, payments *repository.Payments) (*Bot, error) {
 	api, err := bot.New(cfg.Telegram.BotToken, bot.WithDefaultHandler(func(context.Context, *bot.Bot, *models.Update) {}))
 	if err != nil {
 		return nil, err
@@ -32,12 +33,19 @@ func New(ctx context.Context, cfg *config.Config, users *repository.Users, listi
 		users:    users,
 		listings: listings,
 		bans:     bans,
+		payments: payments,
 	}
 	b.registerHandlers()
 	return b, nil
 }
 
 func (b *Bot) registerHandlers() {
+	b.api.RegisterHandlerMatchFunc(func(u *models.Update) bool {
+		return u.PreCheckoutQuery != nil
+	}, b.preCheckoutHandler)
+	b.api.RegisterHandlerMatchFunc(func(u *models.Update) bool {
+		return u.Message != nil && u.Message.SuccessfulPayment != nil
+	}, b.successfulPaymentHandler)
 	b.api.RegisterHandler(bot.HandlerTypeMessageText, "start", bot.MatchTypeCommand, b.startHandler)
 	b.api.RegisterHandler(bot.HandlerTypeMessageText, "links", bot.MatchTypeCommand, b.linksHandler)
 	b.api.RegisterHandler(bot.HandlerTypeMessageText, "status", bot.MatchTypeCommand, b.statusHandler)

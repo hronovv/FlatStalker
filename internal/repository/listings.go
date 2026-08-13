@@ -168,7 +168,16 @@ SELECT l.id, l.user_id, u.chat_id, l.url
 FROM listings l
 JOIN users u ON u.id = l.user_id
 WHERE l.paused = false
-  AND u.plan = $1
+  AND CASE
+    WHEN $1 = 'free' THEN (
+      u.plan = 'free'
+      OR (u.plan_expires_at IS NOT NULL AND u.plan_expires_at <= now())
+    )
+    ELSE (
+      u.plan = $1
+      AND (u.plan_expires_at IS NULL OR u.plan_expires_at > now())
+    )
+  END
 ORDER BY l.id;
 `
 	rows, err := r.pool.Query(ctx, q, userPlan)

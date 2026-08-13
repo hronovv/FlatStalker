@@ -39,14 +39,15 @@ type Database struct {
 	URL             string
 	MaxConns        int32
 	MinConns        int32
-	MaxConnLifetime  time.Duration
+	MaxConnLifetime time.Duration
 	MaxConnIdleTime time.Duration
 	PingTimeout     time.Duration
 }
 
 type Telegram struct {
-	BotToken       string
-	SupportContact string
+	BotToken             string
+	SupportContact       string
+	PaymentProviderToken string
 }
 
 type CORS struct {
@@ -70,13 +71,14 @@ func MustLoad() *Config {
 			URL:             mustEnv("DATABASE_URL"),
 			MaxConns:        mustInt32("DB_MAX_CONNS"),
 			MinConns:        mustInt32("DB_MIN_CONNS"),
-			MaxConnLifetime:  mustDuration("DB_MAX_CONN_LIFETIME"),
+			MaxConnLifetime: mustDuration("DB_MAX_CONN_LIFETIME"),
 			MaxConnIdleTime: mustDuration("DB_MAX_CONN_IDLE_TIME"),
 			PingTimeout:     mustDuration("DB_PING_TIMEOUT"),
 		},
 		Telegram: Telegram{
-			BotToken:       mustEnv("BOT_TOKEN"),
-			SupportContact: mustEnv("TELEGRAM_SUPPORT"),
+			BotToken:             mustEnv("BOT_TOKEN"),
+			SupportContact:       mustEnv("TELEGRAM_SUPPORT"),
+			PaymentProviderToken: mustEnv("PAYMENT_PROVIDER_TOKEN"),
 		},
 		Worker: Worker{
 			Free: mustDuration("WORKER_INTERVAL_FREE"),

@@ -57,7 +57,6 @@ const I18N = {
     interval_minutes: "каждые {n} мин",
     interval_short_seconds: "{n} сек",
     interval_short_minutes: "{n} мин",
-    pricing_note: "Оплату подключим позже. Цены тестовые, BYN.",
     plan_price: "{amount} BYN",
     plan_price_day: "{amount} BYN/день",
     plan_price_free: "Бесплатно",
@@ -66,6 +65,15 @@ const I18N = {
     plan_days_one: "{n} день",
     plan_days_few: "{n} дня",
     plan_days_many: "{n} дней",
+    plan_buy: "Купить",
+    plan_renew: "Продлить",
+    toast_pay_guest: "Открой кабинет из Telegram",
+    toast_pay_start: "Сначала нажми /start в боте",
+    toast_pay_open: "Открой Mini App из Telegram",
+    toast_pay_fail: "Не удалось открыть оплату",
+    toast_pay_cancel: "Оплата отменена",
+    toast_pay_paid: "Оплата прошла",
+    pricing_note: "Оплата тестовая через Telegram.",
     faq_q: "Есть вопрос по FlatStalker?",
     faq_a: "Напиши",
     footer_meta: "РБ · АРЕНДА",
@@ -156,7 +164,6 @@ const I18N = {
     interval_minutes: "кожныя {n} хв",
     interval_short_seconds: "{n} сек",
     interval_short_minutes: "{n} хв",
-    pricing_note: "Аплату падключым пазней. Цэны тэставыя, BYN.",
     plan_price: "{amount} BYN",
     plan_price_day: "{amount} BYN/дзень",
     plan_price_free: "Бясплатна",
@@ -165,6 +172,15 @@ const I18N = {
     plan_days_one: "{n} дзень",
     plan_days_few: "{n} дні",
     plan_days_many: "{n} дзён",
+    plan_buy: "Купіць",
+    plan_renew: "Падоўжыць",
+    toast_pay_guest: "Адкрый кабінет з Telegram",
+    toast_pay_start: "Спачатку націсні /start у боце",
+    toast_pay_open: "Адкрый Mini App з Telegram",
+    toast_pay_fail: "Не ўдалося адкрыць аплату",
+    toast_pay_cancel: "Аплата адменена",
+    toast_pay_paid: "Аплата прайшла",
+    pricing_note: "Аплата тэставая праз Telegram.",
     faq_q: "Ёсць пытанне па FlatStalker?",
     faq_a: "Напішы",
     footer_meta: "РБ · АРЭНДА",
@@ -338,6 +354,7 @@ const DEFAULT_PRICES = {
 };
 
 let selectedPeriodDays = 15;
+let paying = false;
 
 function pluralKey(base, n) {
   const abs = Math.abs(Number(n)) % 100;
@@ -459,6 +476,12 @@ function renderPlans() {
       const n = linkLimitFor(name);
       linksEl.textContent = t(pluralKey("plan_links", n), { n });
     }
+    const buyEl = card.querySelector("[data-plan-buy]");
+    if (buyEl) {
+      buyEl.hidden = name === "free";
+      buyEl.disabled = paying;
+      buyEl.textContent = isCurrent ? t("plan_renew") : t("plan_buy");
+    }
   });
 
   const statusEl = document.getElementById("status-interval");
@@ -518,6 +541,62 @@ function setLanguage(next) {
 langButtons.forEach((button) => {
   button.addEventListener("click", () => setLanguage(button.dataset.lang));
 });
+
+document.querySelectorAll("[data-plan-buy]").forEach((button) => {
+  button.addEventListener("click", () => buyPlan(button.dataset.planBuy));
+});
+
+async function buyPlan(planName) {
+  if (paying) return;
+  if (!hasTelegramAuth()) {
+    showToast(t("toast_pay_guest"));
+    return;
+  }
+  if (!me) {
+    showToast(t("toast_pay_start"));
+    return;
+  }
+  if (typeof tg?.openInvoice !== "function") {
+    showToast(t("toast_pay_open"));
+    return;
+  }
+
+  paying = true;
+  renderPlans();
+  try {
+    const res = await apiFetch("/api/pay", {
+      method: "POST",
+      body: JSON.stringify({ plan: planName, days: selectedPeriodDays }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok || !body.invoice_url) {
+      showToast(t("toast_pay_fail"));
+      paying = false;
+      renderPlans();
+      return;
+    }
+    tg.openInvoice(body.invoice_url, (status) => {
+      paying = false;
+      renderPlans();
+      if (status === "paid") {
+        showToast(t("toast_pay_paid"));
+        loadCabinet();
+        return;
+      }
+      if (status === "cancelled") {
+        showToast(t("toast_pay_cancel"));
+        return;
+      }
+      if (status === "failed") {
+        showToast(t("toast_pay_fail"));
+      }
+    });
+  } catch {
+    showToast(t("toast_pay_fail"));
+    paying = false;
+    renderPlans();
+  }
+}
 
 function showToast(message) {
   if (!toast) return;

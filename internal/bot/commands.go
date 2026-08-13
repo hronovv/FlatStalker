@@ -316,6 +316,9 @@ func (b *Bot) statusHandler(ctx context.Context, _ *bot.Bot, update *models.Upda
 		plan.FormatIntervalRU(interval),
 		plan.LinkLimit(userPlan),
 	)
+	if userPlan != plan.Free && user.PlanExpiresAt != nil {
+		text += fmt.Sprintf("\nДействует до: %s", user.PlanExpiresAt.Local().Format("02.01.2006 15:04"))
+	}
 
 	_, err = b.api.SendMessage(b.ctx, &bot.SendMessageParams{
 		ChatID: chatID,

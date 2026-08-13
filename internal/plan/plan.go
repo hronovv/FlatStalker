@@ -49,6 +49,50 @@ func Label(name string) string {
 	}
 }
 
+func Rank(name string) int {
+	switch Normalize(name) {
+	case Pro:
+		return 2
+	case Plus:
+		return 1
+	default:
+		return 0
+	}
+}
+
+func Effective(name string, expiresAt *time.Time, now time.Time) string {
+	p := Normalize(name)
+	if p == Free {
+		return Free
+	}
+	if expiresAt == nil || expiresAt.After(now) {
+		return p
+	}
+	return Free
+}
+
+func FormatDaysRU(n int) string {
+	if n < 1 {
+		n = 1
+	}
+	return fmt.Sprintf("%d %s", n, russianDays(n))
+}
+
+func russianDays(n int) string {
+	n = n % 100
+	if n >= 11 && n <= 14 {
+		return "дней"
+	}
+	switch n % 10 {
+	case 1:
+		return "день"
+	case 2, 3, 4:
+		return "дня"
+	default:
+		return "дней"
+	}
+}
+
 func LinkLimit(name string) int {
 	switch Normalize(name) {
 	case Plus:

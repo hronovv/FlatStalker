@@ -649,6 +649,24 @@ a:hover {
   font: 600 0.82rem/1.2 var(--mono);
 }
 
+.plan-buy {
+  margin-top: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font: 700 0.78rem/1 var(--mono);
+  letter-spacing: 0.03em;
+  cursor: pointer;
+}
+
+.plan-buy:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
 .plans {
   display: grid;
   gap: 8px;

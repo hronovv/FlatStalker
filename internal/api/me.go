@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"time"
 
 	"flat-stalker/internal/models"
 	"flat-stalker/internal/plan"
@@ -53,11 +54,11 @@ func (h *MeHandler) Get(c *gin.Context) {
 		return
 	}
 
-	userPlan := plan.Normalize(user.Plan)
+	userPlan := plan.Effective(user.Plan, user.PlanExpiresAt, time.Now())
 	interval := h.Intervals.For(userPlan)
 	limit := plan.LinkLimit(userPlan)
 
-	c.JSON(http.StatusOK, gin.H{
+	resp := gin.H{
 		"ok":          true,
 		"plan":        userPlan,
 		"plan_label":  plan.Label(userPlan),
@@ -76,5 +77,9 @@ func (h *MeHandler) Get(c *gin.Context) {
 		},
 		"prices": plan.PriceCatalog(),
 		"links":  listingsJSON(listings),
-	})
+	}
+	if user.PlanExpiresAt != nil {
+		resp["plan_expires_at"] = user.PlanExpiresAt.UTC().Format("2006-01-02T15:04:05Z")
+	}
+	c.JSON(http.StatusOK, resp)
 }

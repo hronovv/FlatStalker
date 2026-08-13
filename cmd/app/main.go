@@ -34,8 +34,9 @@ func main() {
 	seen := repository.NewSeenAds(pool)
 	users := repository.NewUsers(pool)
 	bans := repository.NewBans(pool)
+	payments := repository.NewPayments(pool)
 
-	tgBot, err := appbot.New(ctx, cfg, users, listings, bans)
+	tgBot, err := appbot.New(ctx, cfg, users, listings, bans, payments)
 	if err != nil {
 		panic(err)
 	}
@@ -78,6 +79,13 @@ func main() {
 		Intervals: intervals,
 	}
 	me.Register(apiGroup)
+
+	pay := &api.PayHandler{
+		Users:    users,
+		Payments: payments,
+		Invoices: tgBot,
+	}
+	pay.Register(apiGroup)
 
 	srv := &http.Server{
 		Addr:         cfg.Server.Addr,
