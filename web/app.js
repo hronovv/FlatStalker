@@ -67,13 +67,21 @@ const I18N = {
     plan_days_many: "{n} дней",
     plan_buy: "Купить",
     plan_renew: "Продлить",
+    pay_kicker: "Оплата тарифа",
+    pay_period: "Срок: {period}",
+    pay_confirm: "Оплатить {amount} BYN",
+    pay_cancel: "Отмена",
+    pay_currency: "К оплате в белорусских рублях, BYN.",
+    pay_test_note: "В тестовом Telegram счёт может показаться в долларах — это витрина теста, цена всё равно в BYN.",
+    pay_sent_chat: "Счёт отправили в чат с ботом. Закрой кабинет и оплати там.",
+    pay_open_chat: "Открыть чат",
     toast_pay_guest: "Открой кабинет из Telegram",
     toast_pay_start: "Сначала нажми /start в боте",
     toast_pay_open: "Открой Mini App из Telegram",
     toast_pay_fail: "Не удалось открыть оплату",
     toast_pay_cancel: "Оплата отменена",
     toast_pay_paid: "Оплата прошла",
-    pricing_note: "Оплата тестовая через Telegram.",
+    pricing_note: "Цены в BYN. Оплата тестовая через Telegram.",
     faq_q: "Есть вопрос по FlatStalker?",
     faq_a: "Напиши",
     footer_meta: "РБ · АРЕНДА",
@@ -174,13 +182,21 @@ const I18N = {
     plan_days_many: "{n} дзён",
     plan_buy: "Купіць",
     plan_renew: "Падоўжыць",
+    pay_kicker: "Аплата тарыфу",
+    pay_period: "Тэрмін: {period}",
+    pay_confirm: "Аплаціць {amount} BYN",
+    pay_cancel: "Адмена",
+    pay_currency: "Да аплаты ў беларускіх рублях, BYN.",
+    pay_test_note: "У тэставым Telegram рахунак можа паказацца ў доларах — гэта вітрына тэсту, цана ўсё роўна ў BYN.",
+    pay_sent_chat: "Рахунак адправілі ў чат з ботам. Закрый кабінет і аплаці там.",
+    pay_open_chat: "Адкрыць чат",
     toast_pay_guest: "Адкрый кабінет з Telegram",
     toast_pay_start: "Спачатку націсні /start у боце",
     toast_pay_open: "Адкрый Mini App з Telegram",
     toast_pay_fail: "Не ўдалося адкрыць аплату",
     toast_pay_cancel: "Аплата адменена",
     toast_pay_paid: "Аплата прайшла",
-    pricing_note: "Аплата тэставая праз Telegram.",
+    pricing_note: "Цэны ў BYN. Аплата тэставая праз Telegram.",
     faq_q: "Ёсць пытанне па FlatStalker?",
     faq_a: "Напішы",
     footer_meta: "РБ · АРЭНДА",
@@ -543,10 +559,31 @@ langButtons.forEach((button) => {
 });
 
 document.querySelectorAll("[data-plan-buy]").forEach((button) => {
-  button.addEventListener("click", () => buyPlan(button.dataset.planBuy));
+  button.addEventListener("click", () => openPaySheet(button.dataset.planBuy));
 });
 
-async function buyPlan(planName) {
+const payOverlay = document.getElementById("pay-overlay");
+const payTitle = document.getElementById("pay-title");
+const payPeriod = document.getElementById("pay-period");
+const paySum = document.getElementById("pay-sum");
+const payDay = document.getElementById("pay-day");
+const payStatus = document.getElementById("pay-status");
+const payConfirm = document.getElementById("pay-confirm");
+const payCancel = document.getElementById("pay-cancel");
+const payClose = document.getElementById("pay-close");
+let payPlan = "";
+let payBotURL = "";
+
+function closePaySheet() {
+  if (!payOverlay) return;
+  payOverlay.hidden = true;
+  document.documentElement.classList.remove("pay-open");
+  paying = false;
+  payBotURL = "";
+  renderPlans();
+}
+
+function openPaySheet(planName) {
   if (paying) return;
   if (!hasTelegramAuth()) {
     showToast(t("toast_pay_guest"));
@@ -556,47 +593,105 @@ async function buyPlan(planName) {
     showToast(t("toast_pay_start"));
     return;
   }
-  if (typeof tg?.openInvoice !== "function") {
-    showToast(t("toast_pay_open"));
+  const amount = planAmount(planName, selectedPeriodDays);
+  if (!amount) {
+    showToast(t("toast_pay_fail"));
     return;
   }
+  payPlan = planName;
+  if (payTitle) payTitle.textContent = String(planName || "").toUpperCase();
+  if (payPeriod) {
+    payPeriod.textContent = t("pay_period", {
+      period: t(pluralKey("plan_days", selectedPeriodDays), { n: selectedPeriodDays }),
+    });
+  }
+  if (paySum) paySum.textContent = t("plan_price", { amount });
+  if (payDay) {
+    const perDay = perDayAmount(amount, selectedPeriodDays);
+    payDay.textContent = perDay ? t("plan_price_day", { amount: perDay }) : "";
+  }
+  if (payStatus) {
+    payStatus.hidden = true;
+    payStatus.textContent = "";
+  }
+  if (payConfirm) {
+    payConfirm.hidden = false;
+    payConfirm.disabled = false;
+    payConfirm.textContent = t("pay_confirm", { amount });
+  }
+  if (payCancel) payCancel.textContent = t("pay_cancel");
+  if (payOverlay) payOverlay.hidden = false;
+  document.documentElement.classList.add("pay-open");
+}
 
+async function buyPlan() {
+  if (paying || !payPlan) return;
   paying = true;
+  if (payConfirm) payConfirm.disabled = true;
   renderPlans();
   try {
     const res = await apiFetch("/api/pay", {
       method: "POST",
-      body: JSON.stringify({ plan: planName, days: selectedPeriodDays }),
+      body: JSON.stringify({ plan: payPlan, days: selectedPeriodDays }),
     });
-    const body = await res.json().catch(() => ({}));
-    if (!res.ok || !body.invoice_url) {
+    if (!res.ok) {
       showToast(t("toast_pay_fail"));
       paying = false;
+      if (payConfirm) payConfirm.disabled = false;
       renderPlans();
       return;
     }
-    tg.openInvoice(body.invoice_url, (status) => {
-      paying = false;
-      renderPlans();
-      if (status === "paid") {
-        showToast(t("toast_pay_paid"));
-        loadCabinet();
-        return;
-      }
-      if (status === "cancelled") {
-        showToast(t("toast_pay_cancel"));
-        return;
-      }
-      if (status === "failed") {
-        showToast(t("toast_pay_fail"));
-      }
-    });
+    const body = await res.json().catch(() => ({}));
+    payBotURL = body.bot_url || "";
+    showChatInvoice();
   } catch {
     showToast(t("toast_pay_fail"));
     paying = false;
+    if (payConfirm) payConfirm.disabled = false;
     renderPlans();
   }
 }
+
+function showChatInvoice() {
+  paying = false;
+  renderPlans();
+  if (payConfirm) {
+    payConfirm.hidden = !payBotURL;
+    payConfirm.disabled = false;
+    payConfirm.textContent = t("pay_open_chat");
+  }
+  if (payStatus) {
+    payStatus.hidden = false;
+    payStatus.textContent = t("pay_sent_chat");
+  }
+}
+
+function openPayChat() {
+  if (payBotURL) openTelegramUrl(payBotURL);
+  try {
+    tg?.close?.();
+  } catch {
+    /* desktop webview */
+  }
+}
+
+payConfirm?.addEventListener("click", () => {
+  if (payStatus && !payStatus.hidden && payBotURL) {
+    openPayChat();
+    return;
+  }
+  buyPlan();
+});
+payCancel?.addEventListener("click", closePaySheet);
+payClose?.addEventListener("click", closePaySheet);
+payOverlay?.addEventListener("click", (event) => {
+  if (event.target === payOverlay) closePaySheet();
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && payOverlay && !payOverlay.hidden) {
+    closePaySheet();
+  }
+});
 
 function showToast(message) {
   if (!toast) return;

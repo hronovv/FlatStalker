@@ -11,7 +11,8 @@
       html, body { background: #08111f; }
       html:not(.cabinet-ready):not(.is-banned) .page { visibility: hidden; }
       html.is-banned .page,
-      html.is-banned .toast { display: none !important; }
+      html.is-banned .toast,
+      html.is-banned .pay-overlay { display: none !important; }
       .ban-screen { display: none; }
       html.is-banned .ban-screen {
         display: grid;
@@ -52,7 +53,7 @@
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=37" />
+    <link rel="stylesheet" href="styles.css?v=39" />
   </head>
   <body>
     <main class="page">
@@ -280,7 +281,7 @@
               <button type="button" class="plan-buy" data-plan-buy="pro"></button>
             </article>
           </div>
-          <p class="acc-note" data-i18n="pricing_note">Оплата тестовая через Telegram.</p>
+          <p class="acc-note" data-i18n="pricing_note">Цены в BYN. Оплата тестовая через Telegram.</p>
         </div>
       </details>
 
@@ -310,6 +311,22 @@
 
     <div class="toast" id="toast" hidden></div>
 
+    <div class="pay-overlay" id="pay-overlay" hidden>
+      <div class="pay-sheet" role="dialog" aria-modal="true" aria-labelledby="pay-title">
+        <button type="button" class="pay-close" id="pay-close" aria-label="Close">×</button>
+        <p class="pay-kicker" data-i18n="pay_kicker">Оплата тарифа</p>
+        <h2 class="pay-title" id="pay-title">PLUS</h2>
+        <p class="pay-period" id="pay-period"></p>
+        <p class="pay-sum" id="pay-sum"></p>
+        <p class="pay-day" id="pay-day"></p>
+        <p class="pay-currency" data-i18n="pay_currency">К оплате в белорусских рублях, BYN.</p>
+        <p class="pay-note" data-i18n="pay_test_note">В тестовом Telegram счёт может показаться в долларах — это витрина теста, цена всё равно в BYN.</p>
+        <p class="pay-status" id="pay-status" hidden></p>
+        <button type="button" class="plan-buy" id="pay-confirm"></button>
+        <button type="button" class="pay-cancel" id="pay-cancel" data-i18n="pay_cancel">Отмена</button>
+      </div>
+    </div>
+
     <section class="ban-screen" id="ban-screen">
       <div class="lang-switch ban-lang" role="group" aria-label="Language">
         <button type="button" class="lang-btn is-active" data-lang="ru">RU</button>
@@ -334,6 +351,6 @@
       </div>
     </section>
 
-    <script src="app.js?v=37"></script>
+    <script src="app.js?v=39"></script>
   </body>
 </html>

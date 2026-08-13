@@ -18,10 +18,16 @@ type Bot struct {
 	listings *repository.Listings
 	bans     *repository.Bans
 	payments *repository.Payments
+	username string
 }
 
 func New(ctx context.Context, cfg *config.Config, users *repository.Users, listings *repository.Listings, bans *repository.Bans, payments *repository.Payments) (*Bot, error) {
 	api, err := bot.New(cfg.Telegram.BotToken, bot.WithDefaultHandler(func(context.Context, *bot.Bot, *models.Update) {}))
+	if err != nil {
+		return nil, err
+	}
+
+	me, err := api.GetMe(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -34,6 +40,7 @@ func New(ctx context.Context, cfg *config.Config, users *repository.Users, listi
 		listings: listings,
 		bans:     bans,
 		payments: payments,
+		username: me.Username,
 	}
 	b.registerHandlers()
 	return b, nil

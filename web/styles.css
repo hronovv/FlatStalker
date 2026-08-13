@@ -667,6 +667,94 @@ a:hover {
   cursor: wait;
 }
 
+html.pay-open {
+  overflow: hidden;
+}
+
+.pay-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+  background: rgba(5, 12, 22, 0.78);
+  backdrop-filter: blur(8px);
+}
+
+.pay-overlay[hidden] {
+  display: none;
+}
+
+.pay-sheet {
+  position: relative;
+  width: min(100%, 380px);
+  display: grid;
+  gap: 8px;
+  padding: 22px 18px 18px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+
+.pay-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font: 500 1.4rem/1 var(--mono);
+  cursor: pointer;
+}
+
+.pay-kicker,
+.pay-period,
+.pay-day,
+.pay-currency,
+.pay-note,
+.pay-status {
+  margin: 0;
+  color: var(--muted);
+  font: 600 0.75rem/1.45 var(--mono);
+}
+
+.pay-title {
+  margin: 0;
+  padding-right: 28px;
+  color: var(--text);
+  font: 700 1.25rem/1.2 var(--mono);
+}
+
+.pay-sum {
+  margin: 6px 0 0;
+  color: var(--accent);
+  font: 700 1.6rem/1.15 var(--mono);
+}
+
+.pay-note {
+  padding-top: 4px;
+}
+
+.pay-status {
+  color: var(--accent);
+}
+
+.pay-cancel {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  font: 700 0.78rem/1 var(--mono);
+  cursor: pointer;
+}
+
 .plans {
   display: grid;
   gap: 8px;

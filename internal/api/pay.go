@@ -12,7 +12,8 @@ import (
 )
 
 type InvoiceCreator interface {
-	CreatePlanInvoice(ctx context.Context, payload, title, description string, amountKop int) (string, error)
+	IssuePlanInvoice(ctx context.Context, chatID int64, payload, title, description string, amountKop int) (string, error)
+	BotURL() string
 }
 
 type PayHandler struct {
@@ -71,8 +72,12 @@ func (h *PayHandler) Create(c *gin.Context) {
 	}
 
 	title := "FlatStalker " + plan.Label(planName)
-	desc := "FlatStalker " + title + " на " + plan.FormatDaysRU(req.Days)
-	link, err := h.Invoices.CreatePlanInvoice(c.Request.Context(), payment.Payload, title, desc, kop)
+	if len(title) > 32 {
+		title = plan.Label(planName)
+	}
+	amount := plan.FormatBYN(kop)
+	desc := title + " на " + plan.FormatDaysRU(req.Days) + ". К оплате " + amount + " BYN"
+	botURL, err := h.Invoices.IssuePlanInvoice(c.Request.Context(), chatID, payment.Payload, title, desc, kop)
 	if err != nil {
 		log.Printf("invoice: %v", err)
 		c.JSON(http.StatusBadGateway, gin.H{"error": "failed to create invoice"})
@@ -81,10 +86,11 @@ func (h *PayHandler) Create(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"ok":          true,
-		"invoice_url": link,
+		"bot_url":     botURL,
+		"invoice_url": "",
 		"plan":        planName,
 		"days":        req.Days,
-		"amount":      plan.FormatBYN(kop),
+		"amount":      amount,
 		"amount_kop":  kop,
 		"currency":    plan.Currency,
 	})

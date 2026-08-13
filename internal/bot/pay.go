@@ -11,17 +11,29 @@ import (
 	"github.com/go-telegram/bot/models"
 )
 
-func (b *Bot) CreatePlanInvoice(ctx context.Context, payload, title, description string, amountKop int) (string, error) {
-	return b.api.CreateInvoiceLink(ctx, &bot.CreateInvoiceLinkParams{
+func (b *Bot) BotURL() string {
+	if b.username == "" {
+		return ""
+	}
+	return "https://t.me/" + b.username
+}
+
+func (b *Bot) IssuePlanInvoice(ctx context.Context, chatID int64, payload, title, description string, amountKop int) (string, error) {
+	_, err := b.api.SendInvoice(ctx, &bot.SendInvoiceParams{
+		ChatID:        chatID,
 		Title:         title,
 		Description:   description,
 		Payload:       payload,
 		ProviderToken: b.config.Telegram.PaymentProviderToken,
 		Currency:      plan.Currency,
 		Prices: []models.LabeledPrice{
-			{Label: title, Amount: amountKop},
+			{Label: plan.FormatBYN(amountKop) + " BYN", Amount: amountKop},
 		},
 	})
+	if err != nil {
+		return "", err
+	}
+	return b.BotURL(), nil
 }
 
 func (b *Bot) preCheckoutHandler(ctx context.Context, _ *bot.Bot, update *models.Update) {
@@ -40,7 +52,7 @@ func (b *Bot) preCheckoutHandler(ctx context.Context, _ *bot.Bot, update *models
 	} else if payment == nil || payment.Status != "pending" {
 		ok = false
 		errMsg = "Счёт уже недействителен. Создай оплату заново."
-	} else if q.Currency != plan.Currency || q.TotalAmount != payment.AmountKop {
+	} else if q.TotalAmount != payment.AmountKop {
 		ok = false
 		errMsg = "Сумма не совпадает. Создай оплату заново."
 	} else if q.From != nil && payment.ChatID != 0 && q.From.ID != payment.ChatID {
