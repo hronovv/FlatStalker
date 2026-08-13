@@ -608,7 +608,7 @@ a:hover {
 
 .plan-period-block {
   display: grid;
-  gap: 6px;
+  gap: 10px;
   margin: 0 0 12px;
 }
 
@@ -621,6 +621,8 @@ a:hover {
 .plan-period-value {
   color: var(--accent);
   font-weight: 700;
+  font-size: 1.18rem;
+  letter-spacing: -0.02em;
 }
 
 .plan-periods {
