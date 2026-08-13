@@ -762,6 +762,19 @@ html.pay-open {
   font: 700 1.6rem/1.15 var(--mono);
 }
 
+.pay-desktop-note {
+  margin: 8px 0 2px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(65, 217, 196, 0.08);
+  color: var(--muted);
+  font: 600 0.72rem/1.45 var(--mono);
+}
+
+.pay-desktop-note[hidden] {
+  display: none;
+}
+
 .pay-status {
   color: var(--accent);
 }

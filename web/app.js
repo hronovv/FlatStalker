@@ -71,6 +71,8 @@ const I18N = {
     pay_period: "Срок: {period}",
     pay_confirm: "Оплатить {amount} BYN",
     pay_cancel: "Отмена",
+    pay_desktop_note:
+      "Не все версии Telegram проводят оплату. Если ты на компьютере — открой приложение на телефоне.",
     pay_sent_chat: "Счёт отправили в чат с ботом. Закрой кабинет и оплати там.",
     pay_open_chat: "Открыть чат",
     toast_pay_guest: "Открой кабинет из Telegram",
@@ -184,6 +186,8 @@ const I18N = {
     pay_period: "Тэрмін: {period}",
     pay_confirm: "Аплаціць {amount} BYN",
     pay_cancel: "Адмена",
+    pay_desktop_note:
+      "Не ўсе версіі Telegram праводзяць аплату. Калі ты на камп'ютары — адкрый прыкладанне на тэлефоне.",
     pay_sent_chat: "Рахунак адправілі ў чат з ботам. Закрый кабінет і аплаці там.",
     pay_open_chat: "Адкрыць чат",
     toast_pay_guest: "Адкрый кабінет з Telegram",
@@ -567,8 +571,14 @@ const payStatus = document.getElementById("pay-status");
 const payConfirm = document.getElementById("pay-confirm");
 const payCancel = document.getElementById("pay-cancel");
 const payClose = document.getElementById("pay-close");
+const payDesktopNote = document.getElementById("pay-desktop-note");
 let payPlan = "";
 let payBotURL = "";
+
+function canPayInThisClient() {
+  const platform = String(tg?.platform || "").toLowerCase();
+  return platform === "ios" || platform === "android";
+}
 
 function closePaySheet() {
   if (!payOverlay) return;
@@ -605,6 +615,10 @@ function openPaySheet(planName) {
   if (payDay) {
     const perDay = perDayAmount(amount, selectedPeriodDays);
     payDay.textContent = perDay ? t("plan_price_day", { amount: perDay }) : "";
+  }
+  if (payDesktopNote) {
+    payDesktopNote.hidden = canPayInThisClient();
+    payDesktopNote.textContent = t("pay_desktop_note");
   }
   if (payStatus) {
     payStatus.hidden = true;
