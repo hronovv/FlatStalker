@@ -743,8 +743,6 @@ html.pay-open {
 .pay-kicker,
 .pay-period,
 .pay-day,
-.pay-currency,
-.pay-note,
 .pay-status {
   margin: 0;
   color: var(--muted);
@@ -762,10 +760,6 @@ html.pay-open {
   margin: 6px 0 0;
   color: var(--accent);
   font: 700 1.6rem/1.15 var(--mono);
-}
-
-.pay-note {
-  padding-top: 4px;
 }
 
 .pay-status {
