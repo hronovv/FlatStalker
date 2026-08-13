@@ -55,6 +55,12 @@ func main() {
 	router := gin.Default()
 	router.Use(api.CORS(cfg.CORS.Origins))
 
+	health := &api.HealthHandler{
+		Pool:    pool,
+		Timeout: cfg.Database.PingTimeout,
+	}
+	health.Register(router)
+
 	apiGroup := router.Group("/api")
 	apiGroup.Use(api.TelegramAuth(cfg.Telegram.BotToken, 24*time.Hour, bans, cfg.Telegram.SupportContact))
 
