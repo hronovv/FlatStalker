@@ -451,15 +451,43 @@ function isPlanUpgrade(name) {
   return Boolean(me) && planRank(name) > planRank(currentPlanName());
 }
 
+const MONTHS_GENITIVE = {
+  ru: [
+    "января",
+    "февраля",
+    "марта",
+    "апреля",
+    "мая",
+    "июня",
+    "июля",
+    "августа",
+    "сентября",
+    "октября",
+    "ноября",
+    "декабря",
+  ],
+  by: [
+    "студзеня",
+    "лютага",
+    "сакавіка",
+    "красавіка",
+    "мая",
+    "чэрвеня",
+    "ліпеня",
+    "жніўня",
+    "верасня",
+    "кастрычніка",
+    "лістапада",
+    "снежня",
+  ],
+};
+
 function formatPlanDate(iso) {
   if (!iso) return "";
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleDateString(lang === "by" ? "be-BY" : "ru-RU", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  const months = MONTHS_GENITIVE[lang] || MONTHS_GENITIVE.ru;
+  return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
 }
 
 function currentPlanLabel() {
