@@ -8,7 +8,7 @@ import (
 const Currency = "BYN"
 
 // Periods are the paid durations, in days.
-var Periods = []int{1, 3, 5, 7, 15, 30, 90, 180, 365}
+var Periods = []int{1, 3, 7, 15, 30, 90, 180}
 
 // Kop is the price in kopecks (1 BYN = 100). 30-day PLUS is the anchor;
 // shorter periods cost more per day, longer ones less. PRO is 2× PLUS
@@ -16,25 +16,21 @@ var Periods = []int{1, 3, 5, 7, 15, 30, 90, 180, 365}
 var plusKop = map[int]int{
 	1:   70,
 	3:   160,
-	5:   230,
 	7:   290,
 	15:  550,
 	30:  990,
 	90:  2520,
 	180: 4450,
-	365: 7200,
 }
 
 var proKop = map[int]int{
 	1:   140,
 	3:   320,
-	5:   460,
 	7:   580,
 	15:  1100,
 	30:  1990,
 	90:  5040,
 	180: 8900,
-	365: 14400,
 }
 
 func PriceKop(name string, days int) (int, bool) {

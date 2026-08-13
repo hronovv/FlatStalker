@@ -57,8 +57,9 @@ const I18N = {
     interval_minutes: "каждые {n} мин",
     interval_short_seconds: "{n} сек",
     interval_short_minutes: "{n} мин",
-    pricing_note: "Оплата подключим позже. Цены тестовые, BYN.",
+    pricing_note: "Оплату подключим позже. Цены тестовые, BYN.",
     plan_price: "{amount} BYN",
+    plan_price_day: "{amount} BYN/день",
     plan_price_free: "Бесплатно",
     plan_period_chip: "{n}д",
     plan_period_hint: "Цена за {period}",
@@ -157,6 +158,7 @@ const I18N = {
     interval_short_minutes: "{n} хв",
     pricing_note: "Аплату падключым пазней. Цэны тэставыя, BYN.",
     plan_price: "{amount} BYN",
+    plan_price_day: "{amount} BYN/дзень",
     plan_price_free: "Бясплатна",
     plan_period_chip: "{n}д",
     plan_period_hint: "Цана за {period}",
@@ -311,35 +313,31 @@ const DEFAULT_LINK_LIMITS = {
   pro: 5,
 };
 
-const DEFAULT_PERIOD_DAYS = [1, 3, 5, 7, 15, 30, 90, 180, 365];
+const DEFAULT_PERIOD_DAYS = [1, 3, 7, 15, 30, 90, 180];
 const DEFAULT_PRICES = {
   currency: "BYN",
   period_days: DEFAULT_PERIOD_DAYS,
   plus: {
     1: "0.70",
     3: "1.60",
-    5: "2.30",
     7: "2.90",
     15: "5.50",
     30: "9.90",
     90: "25.20",
     180: "44.50",
-    365: "72.00",
   },
   pro: {
     1: "1.40",
     3: "3.20",
-    5: "4.60",
     7: "5.80",
     15: "11.00",
     30: "19.90",
     90: "50.40",
     180: "89.00",
-    365: "144.00",
   },
 };
 
-let selectedPeriodDays = 30;
+let selectedPeriodDays = 15;
 
 function pluralKey(base, n) {
   const abs = Math.abs(Number(n)) % 100;
@@ -384,12 +382,18 @@ function planAmount(planName, days) {
   return table[String(days)] || table[days] || "";
 }
 
+function perDayAmount(amount, days) {
+  const total = Number(amount);
+  if (!days || !Number.isFinite(total)) return "";
+  return (total / days).toFixed(2);
+}
+
 function renderPeriodChips() {
   const root = document.getElementById("plan-periods");
   if (!root) return;
   const days = periodDays();
   if (!days.includes(selectedPeriodDays)) {
-    selectedPeriodDays = days.includes(30) ? 30 : days[0];
+    selectedPeriodDays = days.includes(15) ? 15 : days[0];
   }
   root.replaceChildren(
     ...days.map((n) => {
@@ -429,12 +433,18 @@ function renderPlans() {
       badge.textContent = t("plan_badge_current");
     }
     const priceEl = card.querySelector("[data-plan-price]");
+    const dayEl = card.querySelector("[data-plan-price-day]");
     if (priceEl) {
       if (name === "free") {
         priceEl.textContent = t("plan_price_free");
+        if (dayEl) dayEl.textContent = "";
       } else {
         const amount = planAmount(name, selectedPeriodDays);
         priceEl.textContent = amount ? t("plan_price", { amount }) : "";
+        const perDay = perDayAmount(amount, selectedPeriodDays);
+        if (dayEl) {
+          dayEl.textContent = perDay ? t("plan_price_day", { amount: perDay }) : "";
+        }
       }
     }
     const intervalEl = card.querySelector("[data-plan-interval]");

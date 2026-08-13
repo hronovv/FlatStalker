@@ -630,10 +630,23 @@ a:hover {
   color: var(--accent-ink);
 }
 
+.plan-price-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+}
+
 .plan-price {
   margin: 0;
   color: var(--text);
   font: 700 0.92rem/1.2 var(--mono);
+}
+
+.plan-price-day {
+  color: var(--muted);
+  font: 600 0.72rem/1.2 var(--mono);
 }
 
 .plans {
