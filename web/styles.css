@@ -847,11 +847,14 @@ html.pay-open {
 }
 
 .plan-best {
-  margin: 4px 0 0;
   color: var(--accent);
-  font: 700 0.65rem/1 var(--mono);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+}
+
+.plan-best::before {
+  content: " — ";
+  color: var(--muted);
 }
 
 .plan-badge {
