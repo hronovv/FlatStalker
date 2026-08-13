@@ -74,6 +74,7 @@ func (h *MeHandler) Get(c *gin.Context) {
 			plan.Plus: plan.LinkLimit(plan.Plus),
 			plan.Pro:  plan.LinkLimit(plan.Pro),
 		},
-		"links": listingsJSON(listings),
+		"prices": plan.PriceCatalog(),
+		"links":  listingsJSON(listings),
 	})
 }

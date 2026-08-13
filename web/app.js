@@ -57,7 +57,14 @@ const I18N = {
     interval_minutes: "каждые {n} мин",
     interval_short_seconds: "{n} сек",
     interval_short_minutes: "{n} мин",
-    pricing_note: "Цены и оплату добавим позже.",
+    pricing_note: "Оплата подключим позже. Цены тестовые, BYN.",
+    plan_price: "{amount} BYN",
+    plan_price_free: "Бесплатно",
+    plan_period_chip: "{n}д",
+    plan_period_hint: "Цена за {period}",
+    plan_days_one: "{n} день",
+    plan_days_few: "{n} дня",
+    plan_days_many: "{n} дней",
     faq_q: "Есть вопрос по FlatStalker?",
     faq_a: "Напиши",
     footer_meta: "РБ · АРЕНДА",
@@ -148,7 +155,14 @@ const I18N = {
     interval_minutes: "кожныя {n} хв",
     interval_short_seconds: "{n} сек",
     interval_short_minutes: "{n} хв",
-    pricing_note: "Цэны і аплату дададзім пазней.",
+    pricing_note: "Аплату падключым пазней. Цэны тэставыя, BYN.",
+    plan_price: "{amount} BYN",
+    plan_price_free: "Бясплатна",
+    plan_period_chip: "{n}д",
+    plan_period_hint: "Цана за {period}",
+    plan_days_one: "{n} дзень",
+    plan_days_few: "{n} дні",
+    plan_days_many: "{n} дзён",
     faq_q: "Ёсць пытанне па FlatStalker?",
     faq_a: "Напішы",
     footer_meta: "РБ · АРЭНДА",
@@ -297,6 +311,36 @@ const DEFAULT_LINK_LIMITS = {
   pro: 5,
 };
 
+const DEFAULT_PERIOD_DAYS = [1, 3, 5, 7, 15, 30, 90, 180, 365];
+const DEFAULT_PRICES = {
+  currency: "BYN",
+  period_days: DEFAULT_PERIOD_DAYS,
+  plus: {
+    1: "0.70",
+    3: "1.60",
+    5: "2.30",
+    7: "2.90",
+    15: "5.50",
+    30: "9.90",
+    90: "25.20",
+    180: "44.50",
+    365: "72.00",
+  },
+  pro: {
+    1: "1.40",
+    3: "3.20",
+    5: "4.60",
+    7: "5.80",
+    15: "11.00",
+    30: "19.90",
+    90: "50.40",
+    180: "89.00",
+    365: "144.00",
+  },
+};
+
+let selectedPeriodDays = 30;
+
 function pluralKey(base, n) {
   const abs = Math.abs(Number(n)) % 100;
   const digit = abs % 10;
@@ -321,9 +365,59 @@ function atLinkLimit() {
   return Boolean(me) && links.length >= currentLinkLimit();
 }
 
+function priceCatalog() {
+  const fromMe = me?.prices;
+  if (fromMe?.plus && fromMe?.pro) return fromMe;
+  return DEFAULT_PRICES;
+}
+
+function periodDays() {
+  const days = priceCatalog().period_days;
+  if (Array.isArray(days) && days.length) return days.map(Number);
+  return DEFAULT_PERIOD_DAYS;
+}
+
+function planAmount(planName, days) {
+  const catalog = priceCatalog();
+  const table = catalog[planName];
+  if (!table) return "";
+  return table[String(days)] || table[days] || "";
+}
+
+function renderPeriodChips() {
+  const root = document.getElementById("plan-periods");
+  if (!root) return;
+  const days = periodDays();
+  if (!days.includes(selectedPeriodDays)) {
+    selectedPeriodDays = days.includes(30) ? 30 : days[0];
+  }
+  root.replaceChildren(
+    ...days.map((n) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "plan-period";
+      btn.classList.toggle("is-active", n === selectedPeriodDays);
+      btn.textContent = t("plan_period_chip", { n });
+      btn.addEventListener("click", () => {
+        selectedPeriodDays = n;
+        renderPlans();
+      });
+      return btn;
+    })
+  );
+  const hint = document.getElementById("plan-period-hint");
+  if (hint) {
+    hint.textContent = t("plan_period_hint", {
+      period: t(pluralKey("plan_days", selectedPeriodDays), { n: selectedPeriodDays }),
+    });
+  }
+}
+
 function renderPlans() {
   const currentEl = document.getElementById("plan-current");
   const cards = document.querySelectorAll("[data-plan]");
+
+  renderPeriodChips();
 
   cards.forEach((card) => {
     const name = card.dataset.plan;
@@ -333,6 +427,15 @@ function renderPlans() {
     if (badge) {
       badge.hidden = !isCurrent;
       badge.textContent = t("plan_badge_current");
+    }
+    const priceEl = card.querySelector("[data-plan-price]");
+    if (priceEl) {
+      if (name === "free") {
+        priceEl.textContent = t("plan_price_free");
+      } else {
+        const amount = planAmount(name, selectedPeriodDays);
+        priceEl.textContent = amount ? t("plan_price", { amount }) : "";
+      }
     }
     const intervalEl = card.querySelector("[data-plan-interval]");
     if (intervalEl) {
