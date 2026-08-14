@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -50,8 +51,16 @@ func (h *MeHandler) Get(c *gin.Context) {
 		return
 	}
 	if user == nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "user not found, press /start in the bot first"})
-		return
+		created, err := h.Users.CreateByChatID(c.Request.Context(), chatID)
+		if errors.Is(err, repository.ErrBanned) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "access closed", "code": "banned"})
+			return
+		}
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to load cabinet"})
+			return
+		}
+		user = created
 	}
 
 	userPlan := plan.Effective(user.Plan, user.PlanExpiresAt, time.Now())

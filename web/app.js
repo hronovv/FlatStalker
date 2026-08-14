@@ -1,10 +1,11 @@
 const tg = window.Telegram?.WebApp;
 
 const params = new URLSearchParams(location.search);
-const API_BASE =
-  params.get("api") ||
-  window.FLATSTALKER_API ||
-  "http://127.0.0.1:8080";
+const API_BASE = (() => {
+  if (params.has("api")) return params.get("api") || "";
+  if (typeof window.FLATSTALKER_API === "string") return window.FLATSTALKER_API;
+  return "http://127.0.0.1:8080";
+})();
 
 const LANG_KEY = "flatstalker_lang";
 
@@ -836,6 +837,7 @@ function authHeaders(extra) {
   const data = initData();
   if (data) {
     headers.Authorization = `tma ${data}`;
+    headers["X-Telegram-Init-Data"] = data;
   }
   return headers;
 }
