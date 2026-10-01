@@ -2,3 +2,6 @@
 example.http
 .wrangler
 .dev.vars
+README_LAB.md
+docs/
+ISSUES.md
